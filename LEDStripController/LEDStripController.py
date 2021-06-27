@@ -46,7 +46,7 @@ async def run(address):
                         await client.write_gatt_char(MODEL_NBR_UUID, values, False)
                     except:
                         pass
-                elif x == 2:
+                elif x == 2: #Warzone Airplane
                     val = 50
                     count = 0 # 7
                     verse = False
