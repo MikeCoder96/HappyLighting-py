@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31105.61
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "LEDStripController", "LEDStripController\LEDStripController.pyproj", "{D0BF8EF8-8392-49ED-8774-4462A5237E86}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D0BF8EF8-8392-49ED-8774-4462A5237E86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0BF8EF8-8392-49ED-8774-4462A5237E86}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D0BF8EF8-8392-49ED-8774-4462A5237E86}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D0BF8EF8-8392-49ED-8774-4462A5237E86}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0BF8EF8-8392-49ED-8774-4462A5237E86}.Release|x64.ActiveCfg = Release|Any CPU
+		{D0BF8EF8-8392-49ED-8774-4462A5237E86}.Release|x86.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {06369621-603F-44EC-A403-434C3D7ABF1C}
+	EndGlobalSection
+EndGlobal
