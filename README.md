@@ -1,6 +1,9 @@
 # HappyLighting Python
 Tested on Windows 10
 
+LED Used:
+https://www.amazon.it/gp/product/B08BZFNLLS/ref=ppx_yo_dt_b_asin_title_o06_s00?ie=UTF8&psc=1
+
 ### How to use?
 
 - Edit Address and add your LED BLE Address
