@@ -1,118 +1,192 @@
 import asyncio
-from bleak import BleakClient
-from bleak import BleakScanner
-from time import sleep
+from dataclasses import dataclass
+from functools import cached_property
+import sys
 
-address = "e2:3b:04:00:18:cd"
-MODEL_NBR_UUID = "0000ffd9-0000-1000-8000-00805f9b34fb"
+from PyQt5.QtCore import QObject, pyqtSignal
+from PyQt5.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QLineEdit,
+    QMainWindow,
+    QPlainTextEdit,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+    QColorDialog,
+    QLabel,
+    QGraphicsColorizeEffect,
+)
 
-async def run(address):
-    async with BleakClient(address) as client:
-        while True:
+import qasync
+
+from bleak import BleakScanner, BleakClient
+from bleak.backends.device import BLEDevice
+
+UART_SERVICE_UUID = ""
+UART_RX_CHAR_UUID = ""
+UART_TX_CHAR_UUID = ""
+UART_SAFE_SIZE = 20
+
+Colors = {"Red":0, "Green":0, "Blue":0}
+
+
+@dataclass
+class QBleakClient(QObject):
+    device : BLEDevice
+
+    messageChanged = pyqtSignal(bytes)
+
+    def __post_init__(self):
+        super().__init__()
+
+    @cached_property
+    def client(self) -> BleakClient:
+        return BleakClient(self.device, disconnected_callback=self._handle_disconnect)
+
+    async def start(self):
+        global UART_TX_CHAR_UUID, UART_RX_CHAR_UUID
+        await self.client.connect()
+        svcs = await self.client.get_services()
+        for x in svcs.characteristics:
+           if svcs.characteristics[x].properties[0] == "write-without-response" and UART_TX_CHAR_UUID == "":
+                UART_TX_CHAR_UUID = svcs.characteristics[x].uuid
+           elif svcs.characteristics[x].properties[0] == "read" and UART_RX_CHAR_UUID == "":
+                UART_RX_CHAR_UUID = svcs.characteristics[x].uuid
+
+        #await self.client.start_notify(UART_TX_CHAR_UUID, self._handle_read)
+
+    async def stop(self):
+        await self.client.disconnect()
+
+    async def writeColor(self):
+            lista = [86, Colors["Red"], Colors["Green"], Colors["Blue"], (int(10 * 255 / 100) & 0xFF), 256-16, 256-86]
+            values = bytearray(lista)
             try:
-                print("Select: ")
-                x = int(input())
-                if x == 1: #Change Color
-                    #byte[] arrayOfByte = new byte[7];
-                    #arrayOfByte[0] = 86;
-                    #arrayOfByte[1] = (byte)(Color.red(paramMyColor.color) * paramMyColor.progress / 100);
-                    #arrayOfByte[2] = (byte)(Color.green(paramMyColor.color) * paramMyColor.progress / 100);
-                    #arrayOfByte[3] = (byte)(Color.blue(paramMyColor.color) * paramMyColor.progress / 100);
-                    #arrayOfByte[4] = (byte)(paramMyColor.warmWhite * paramMyColor.progress / 100 & 0xFF);
-                    #arrayOfByte[5] = -16;
-                    #arrayOfByte[6] = -86;
-                    #synTimedata((byte)65, (byte)(Color.red(paramMyColor.color) * paramMyColor.progress / 100), (byte)(Color.red(paramMyColor.color) * paramMyColor.progress / 100), (byte)(Color.green(paramMyColor.color) * paramMyColor.progress / 100), (byte)(Color.blue(paramMyColor.color) * paramMyColor.progress / 100), (byte)0);
-                    #if (paramMyColor.warmWhite != 0) {
-                    #  arrayOfByte[1] = 0;
-                    #  arrayOfByte[2] = 0;
-                    #  arrayOfByte[3] = 0;
-                    #  arrayOfByte[5] = 15;
-                    #  arrayOfByte[4] = (byte)(paramMyColor.progress * 255 / 100 & 0xFF);
-                    #  synTimedata((byte)65, (byte)0, (byte)0, (byte)0, (byte)0, (byte)(paramMyColor.progress * 255 / 100 & 0xFF));
-                    #} 
+                await self.client.write_gatt_char(UART_TX_CHAR_UUID, values, False)
+            except Exception as inst:
+                print(inst)
 
-                    #lista = [86, 0, 0, 0, (int(100 * 255 / 100) & 0xFF), 15, 256-86]
-                    #values = bytearray(lista)
-                    #await client.write_gatt_char(MODEL_NBR_UUID, values, False)
-                    print("RED: ")
-                    red = int(input())
-                    print("GREEN: ")
-                    green = int(input())
-                    print("BLUE: ")
-                    blue = int(input())
-                    lista = [86, red, green, blue, (int(10 * 255 / 100) & 0xFF), 256-16, 256-86]
-                    values = bytearray(lista)
-                    try:
-                        await client.write_gatt_char(MODEL_NBR_UUID, values, False)
-                    except:
-                        pass
-                elif x == 2: #Warzone Airplane
-                    val = 50
-                    count = 0 # 7
-                    verse = False
-                    while True:
-                        lista = [86, val, 0, 0, (int(10 * 255 / 100) & 0xFF), 256-16, 256-86]
-                        values = bytearray(lista)
-                        try:
-                            await client.write_gatt_char(MODEL_NBR_UUID, values, False)
-                            if verse:
-                                val += 1
-                            else:
-                                val -= 1
-                            if val <= 20:
-                                verse = True
-                            if val >= 80:
-                                count += 1
-                                if count >= 5:
-                                    lista = [86, 0, 255, 0, (int(10 * 255 / 100) & 0xFF), 256-16, 256-86]
-                                    values = bytearray(lista)
-                                    await client.write_gatt_char(MODEL_NBR_UUID, values, False)
-                                    break
-                                verse = False
-                            sleep(0.01)
-                            #sleep(0.2)
-                        except:
-                            pass
-                else: #Change Mod
-                    #public final byte[] Mods = new byte[] { 
-                    #      37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 
-                    #      47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 
-                    #      97, 98, 99 };
+    def _handle_disconnect(self, device) -> None:
+        print("Device was disconnected, goodbye.")
+        # cancelling all tasks effectively ends the program
+        for task in asyncio.all_tasks():
+            task.cancel()
 
-                    mod = [37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 
-                            47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 
-                            97, 98, 99]
+    def _handle_read(self, _: int, data: bytearray) -> None:
+        print("received:", data)
+        self.messageChanged.emit(data)
 
-                    #if (paramInt1 < 0 || paramInt1 >= this.Mods.length)
-                    #  return; 
-                    #this.modId = paramInt1;
-                    #byte[] arrayOfByte = new byte[4];
-                    #arrayOfByte[0] = (byte)-69;
-                    #arrayOfByte[1] = (byte)this.Mods[paramInt1];
-                    #byte b = (byte)(paramInt2 & 0xFF);
-                    #arrayOfByte[2] = b;
-                    #arrayOfByte[3] = (byte)68;
-                    #this.cachecmd = arrayOfByte;
-                    #writeCharacteristic("0000ffd5-0000-1000-8000-00805f9b34fb", "0000ffd9-0000-1000-8000-00805f9b34fb", arrayOfByte);
-                    #StringBuilder stringBuilder = new StringBuilder();
-                    #stringBuilder.append("setMod Speed=");
-                    #stringBuilder.append(paramInt2);
-                    #stringBuilder.append(" mod=");
-                    #stringBuilder.append(this.Mods[paramInt1]);
-                    #Log.e("setMod", stringBuilder.toString());
-                    #synTimedata(this.Mods[paramInt1], b, (byte)0, (byte)0, (byte)0, (byte)0);
 
-                    print("Mode: ")
-                    mode = int(input())
-                    speed = int(input()) #255 slow, 0 fast  
-                    lista = [256-69, mod[mode], (speed & 0xFF), 68]
-                    values = bytearray(lista)
-                    try:
-                        await client.write_gatt_char(MODEL_NBR_UUID, values, False)
-                    except:
-                        pass
-            except:
-                pass
+class ColorSelector(QMainWindow):
+  
+    def __init__(self):
+        super().__init__()
+  
+        # setting title
+        self.setWindowTitle("Python ")
+  
+        # setting geometry
+        self.setGeometry(100, 100, 500, 400)
+  
+        # calling method
+        self.UiComponents()
+  
+        # showing all the widgets
+        self.show()
+  
+  
+    # method for components
+    def UiComponents(self):
+  
+        # opening color dialog
+        color = QColorDialog.getColor()
+ 
+        Colors["Red"] = color.red()
+        Colors["Blue"] = color.blue()
+        Colors["Green"] = color.green()
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(run(address))
+
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.resize(640, 480)
+
+        self._client = None
+
+        scan_button = QPushButton("Scan Devices")
+        self.devices_combobox = QComboBox()
+        connect_button = QPushButton("Connect")
+        self.message_lineedit = QLineEdit()
+        send_button = QPushButton("Send Message")
+        self.log_edit = QPlainTextEdit()
+
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        lay = QVBoxLayout(central_widget)
+        lay.addWidget(scan_button)
+        lay.addWidget(self.devices_combobox)
+        lay.addWidget(connect_button)
+        lay.addWidget(self.message_lineedit)
+        lay.addWidget(send_button)
+        lay.addWidget(self.log_edit)
+
+        scan_button.clicked.connect(self.handle_scan)
+        connect_button.clicked.connect(self.handle_connect)
+        send_button.clicked.connect(self.handle_send)
+
+    @cached_property
+    def devices(self):
+        return list()
+
+    @property
+    def current_client(self):
+        return self._client
+
+    async def build_client(self, device):
+        if self._client is not None:
+            await self._client.stop()
+        self._client = QBleakClient(device)
+        self._client.messageChanged.connect(self.handle_message_changed)
+        await self._client.start()
+
+    @qasync.asyncSlot()
+    async def handle_connect(self):
+        self.log_edit.appendPlainText("try connect")
+        device = self.devices_combobox.currentData()
+        if isinstance(device, BLEDevice):
+            await self.build_client(device)
+            self.log_edit.appendPlainText("connected")
+
+    @qasync.asyncSlot()
+    async def handle_scan(self):
+        self.log_edit.appendPlainText("Started scanner")
+        self.devices.clear()
+        devices = await BleakScanner.discover()
+        self.devices.extend(devices)
+        self.devices_combobox.clear()
+        for i, device in enumerate(self.devices):
+            self.devices_combobox.insertItem(i, device.name, device)
+        self.log_edit.appendPlainText("Finish scanner")
+
+    def handle_message_changed(self, message):
+        self.log_edit.appendPlainText(f"msg: {message.decode()}")
+        
+    @qasync.asyncSlot()
+    async def handle_send(self):
+        ColorSelector().show()
+        await self.current_client.writeColor()
+
+def main():
+    app = QApplication(sys.argv)
+    loop = qasync.QEventLoop(app)
+    asyncio.set_event_loop(loop)
+    w = MainWindow()
+    w.show()
+    with loop:
+        loop.run_forever()
+
+
+if __name__ == "__main__":
+    main()
