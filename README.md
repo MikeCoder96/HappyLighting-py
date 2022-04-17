@@ -8,6 +8,8 @@ This repo was built reversing the original APK and replicated the BLE communicat
 
 The repo was tested on Windows 10/11.
 
+There is also a UWP App for Windows [here](https://github.com/MikeCoder96/HappyUltraLighting-UWP)
+
 LED Used:
 https://www.amazon.it/gp/product/B08BZFNLLS/ref=ppx_yo_dt_b_asin_title_o06_s00?ie=UTF8&psc=1
 
