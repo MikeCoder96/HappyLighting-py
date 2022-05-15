@@ -4,7 +4,7 @@
 
 # HappyLighting Python
 Do you recognize the logo? Yes? So, I'm sure you are tired like me about this crappy app. 
-This repo was built reversing the original APK and replicated the BLE communication but wiht intention to extend the features.
+This repo was built reversing the original APK and replicated the BLE communication but with intention to extend the features.
 
 The repo was tested on Windows 10/11.
 
