@@ -28,5 +28,6 @@ Read the [wiki](https://github.com/MikeCoder96/HappyLighting-py/wiki) to underst
 | Framework | WebPage |
 | ------ | ------ |
 | Bleak | [https://github.com/hbldh/bleak] |
+| PyQt5 | [https://github.com/PyQt5] |
 
 
