@@ -13,6 +13,10 @@ There is also a UWP App for Windows [here](https://github.com/MikeCoder96/HappyU
 LED Used:
 https://www.amazon.it/gp/product/B08BZFNLLS/ref=ppx_yo_dt_b_asin_title_o06_s00?ie=UTF8&psc=1
 
+### What to do personal app or want to contribute?
+Read the [wiki](https://github.com/MikeCoder96/HappyLighting-py/wiki) to understand how HappyLight work!
+
+
 ### How to use?
 
 - Edit Address and add your LED BLE Address
