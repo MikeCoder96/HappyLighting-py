@@ -2,8 +2,10 @@ import asyncio
 from dataclasses import dataclass
 from functools import cached_property
 import sys
+from turtle import color
 
-from PyQt5.QtCore import QObject, pyqtSignal
+from PyQt5.QtCore import QObject, pyqtSignal, QRect
+from PyQt5 import QtGui
 from PyQt5.QtWidgets import (
     QApplication,
     QComboBox,
@@ -16,7 +18,10 @@ from PyQt5.QtWidgets import (
     QColorDialog,
     QLabel,
     QGraphicsColorizeEffect,
+    
 )
+
+from ColorSelectorWin import *
 
 import qasync
 
@@ -78,63 +83,54 @@ class QBleakClient(QObject):
         self.messageChanged.emit(data)
 
 
-class ColorSelector(QMainWindow):
-  
-    def __init__(self):
-        super().__init__()
-  
-        # setting title
-        self.setWindowTitle("Python ")
-  
-        # setting geometry
-        self.setGeometry(100, 100, 500, 400)
-  
-        # calling method
-        self.UiComponents()
-  
-        # showing all the widgets
-        self.show()
-  
-  
-    # method for components
-    def UiComponents(self):
-  
-        # opening color dialog
-        color = QColorDialog.getColor()
- 
-        Colors["Red"] = color.red()
-        Colors["Blue"] = color.blue()
-        Colors["Green"] = color.green()
-
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.resize(640, 480)
+        self.resize(400, 300)
 
         self._client = None
+        self.setWindowIcon(QtGui.QIcon('about_icon.png'))
+        self.setWindowTitle("PyHL")
+        
+        self.scan_button = QPushButton(self)
+        self.scan_button.setText("Scan")
+        self.scan_button.setGeometry(QRect(10, 10, 75, 23))
 
-        scan_button = QPushButton("Scan Devices")
-        self.devices_combobox = QComboBox()
-        connect_button = QPushButton("Connect")
-        self.message_lineedit = QLineEdit()
-        send_button = QPushButton("Send Message")
-        self.log_edit = QPlainTextEdit()
+        self.connect_button = QPushButton(self)
+        self.connect_button.setText("Connect")
+        self.connect_button.setGeometry(QRect(10, 40, 75, 23))
 
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        lay = QVBoxLayout(central_widget)
-        lay.addWidget(scan_button)
-        lay.addWidget(self.devices_combobox)
-        lay.addWidget(connect_button)
-        lay.addWidget(self.message_lineedit)
-        lay.addWidget(send_button)
-        lay.addWidget(self.log_edit)
+        self.devices_combobox = QComboBox(self)
+        self.devices_combobox.setGeometry(QRect(90, 10, 121, 22))
 
-        scan_button.clicked.connect(self.handle_scan)
-        connect_button.clicked.connect(self.handle_connect)
-        send_button.clicked.connect(self.handle_send)
+        label = QLabel(self)
+        label.setGeometry(QRect(90, 40, 71, 20))
+
+        self.label = QLabel(self)
+        self.label.setGeometry(QRect(90, 40, 71, 20))
+        self.label.setText("Disconnected")
+        self.label.setStyleSheet("QLabel {color: red; }");
+
+        self.send_button = QPushButton(self)
+        self.send_button.setText("Color")
+        self.send_button.setGeometry(QRect(10, 140, 80, 23))
+
+        #central_widget = QWidget()
+        #self.setCentralWidget(central_widget)
+        #lay = QVBoxLayout(central_widget)
+        #lay.addWidget(pushButton)
+        #lay.addWidget(self.devices_combobox)
+        #lay.addWidget(connect_button)
+        #lay.addWidget(self.message_lineedit)
+        #lay.addWidget(send_button)
+        #lay.addWidget(self.log_edit)
+
+        self.scan_button.clicked.connect(self.handle_scan)
+        self.connect_button.clicked.connect(self.handle_connect)
+        self.send_button.clicked.connect(self.handle_send)
+
 
     @cached_property
     def devices(self):
@@ -153,29 +149,38 @@ class MainWindow(QMainWindow):
 
     @qasync.asyncSlot()
     async def handle_connect(self):
-        self.log_edit.appendPlainText("try connect")
+        #self.log_edit.appendPlainText("try connect")
         device = self.devices_combobox.currentData()
         if isinstance(device, BLEDevice):
             await self.build_client(device)
-            self.log_edit.appendPlainText("connected")
+            self.label.setText("Connected")
+            self.scan_button.setEnabled(False)
+            self.connect_button.setEnabled(False)
+            self.label.setStyleSheet("QLabel {color: green; }");
 
     @qasync.asyncSlot()
     async def handle_scan(self):
-        self.log_edit.appendPlainText("Started scanner")
+        #self.log_edit.appendPlainText("Started scanner")
         self.devices.clear()
         devices = await BleakScanner.discover()
         self.devices.extend(devices)
         self.devices_combobox.clear()
         for i, device in enumerate(self.devices):
-            self.devices_combobox.insertItem(i, device.name, device)
-        self.log_edit.appendPlainText("Finish scanner")
+            if str(device.name).startswith("QHM"):
+                self.devices_combobox.insertItem(i, device.name, device)
+        #self.log_edit.appendPlainText("Finish scanner")
 
     def handle_message_changed(self, message):
-        self.log_edit.appendPlainText(f"msg: {message.decode()}")
+        pass
+        #self.log_edit.appendPlainText(f"msg: {message.decode()}")
         
     @qasync.asyncSlot()
     async def handle_send(self):
-        ColorSelector().show()
+        global Colors
+
+        res = ColorSelector()
+        res.show()
+        Colors = res.GetValue()
         await self.current_client.writeColor()
 
 def main():

@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31105.61
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "LEDStripController", "LEDStripController\LEDStripController.pyproj", "{D0BF8EF8-8392-49ED-8774-4462A5237E86}"
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "PyHL", "LEDStripController\PyHL.pyproj", "{D0BF8EF8-8392-49ED-8774-4462A5237E86}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
