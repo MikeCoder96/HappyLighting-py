@@ -13,7 +13,7 @@ from PyQt5.QtCore import QObject, pyqtSignal, QRect, Qt
 from PyQt5.QtWidgets import (
     QApplication,
     QComboBox,
-    QLineEdit,
+    QCheckBox,
     QMainWindow,
     QPlainTextEdit,
     QPushButton,
@@ -95,6 +95,24 @@ class QBleakClient(QObject):
             except Exception as inst:
                 print(inst)
 
+    async def writeMicState(self, enable):
+            
+            var_1 = -1
+            var_2 = -1
+            if enable:
+                var_1 = 256 - 16
+                var_2 = 50
+            else:
+                var_1 = 15
+                var_2 = 30
+            lista = [1, var_1, var_2,0 ,0, 24]
+            values = bytearray(lista)
+            try:
+                #printLog("Change Mode with ID {} ".format(i_mode))
+                await self.client.write_gatt_char(UART_TX_CHAR_UUID, values, False)
+            except Exception as inst:
+                print(inst)
+
     #TODO: Implement disconnect function
     def _handle_disconnect(self, device) -> None:
         printLog("Device was disconnected")
@@ -148,6 +166,10 @@ class MainWindow(QMainWindow):
         self.modeList.addItem("Pulsating RGB")
         self.modeList.addItem("RGB jumping change")
 
+        self.deviceMic = QCheckBox(self)
+        self.deviceMic.setText("Device Mic")
+        self.deviceMic.setCheckState(Qt.Unchecked)
+        self.deviceMic.setGeometry(QRect(10, 110, 101, 20))
 
         self.scan_button = QPushButton(self)
         self.scan_button.setText("Scan")
@@ -160,8 +182,8 @@ class MainWindow(QMainWindow):
         self.devices_combobox = QComboBox(self)
         self.devices_combobox.setGeometry(QRect(90, 10, 121, 22))
 
-        label = QLabel(self)
-        label.setGeometry(QRect(90, 40, 71, 20))
+        self.label = QLabel(self)
+        self.label.setGeometry(QRect(90, 40, 71, 20))
 
         self.label = QLabel(self)
         self.label.setGeometry(QRect(90, 40, 71, 20))
@@ -172,20 +194,11 @@ class MainWindow(QMainWindow):
         self.send_button.setText("Color")
         self.send_button.setGeometry(QRect(10, 140, 80, 23))
 
-        #central_widget = QWidget()
-        #self.setCentralWidget(central_widget)
-        #lay = QVBoxLayout(central_widget)
-        #lay.addWidget(pushButton)
-        #lay.addWidget(self.devices_combobox)
-        #lay.addWidget(connect_button)
-        #lay.addWidget(self.message_lineedit)
-        #lay.addWidget(send_button)
-        #lay.addWidget(self.log_edit)
-
         self.scan_button.clicked.connect(self.handle_scan)
         self.connect_button.clicked.connect(self.handle_connect)
         self.send_button.clicked.connect(self.handle_send)
         self.modeList.itemDoubleClicked.connect(self.selectMode)
+        self.deviceMic.stateChanged.connect(self.handle_mic)
 
 
     def selectMode(self, item):
@@ -260,6 +273,13 @@ class MainWindow(QMainWindow):
     @qasync.asyncSlot()
     async def handle_mode(self, idx):
         await self.current_client.writeMode(idx)
+
+    @qasync.asyncSlot()
+    async def handle_mic(self):
+        if self.deviceMic.checkState() == Qt.Checked:
+            await self.current_client.writeMicState(True)
+        else:
+            await self.current_client.writeMicState(False)
 
 def main():
     app = QApplication(sys.argv)
