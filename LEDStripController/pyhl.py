@@ -1,15 +1,12 @@
+from bleak import BleakScanner, BleakClient
+import asyncio
 import sys
 import qasync
-import asyncio
 from PyQt5 import QtGui
 from turtle import color
-from ColorSelectorWin import *
 from dataclasses import dataclass
 from functools import cached_property
-from bleak import BleakScanner, BleakClient
-from bleak.backends.device import BLEDevice
-from PyQt5.QtCore import QObject, pyqtSignal, QRect, Qt
-
+from PyQt5.QtCore import QRect, Qt
 from PyQt5.QtWidgets import (
     QApplication,
     QComboBox,
@@ -25,108 +22,16 @@ from PyQt5.QtWidgets import (
     QSlider
 )
 
-DEBUG_LOGS = True
-
-UART_SERVICE_UUID = ""
-UART_RX_CHAR_UUID = ""
-UART_TX_CHAR_UUID = ""
-UART_SAFE_SIZE = 20
-
-Colors = {"Red":0, "Green":0, "Blue":0}
-Modes = [37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 
-         47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 
-         97, 98, 99]
-Speed = 0
-KodeUsed = -1
-isModeUsed = False
-
-def printLog(text):
-    if DEBUG_LOGS:
-        print("[+] {}".format(text))
-
-@dataclass
-class QBleakClient(QObject):
-    device : BLEDevice
-
-    messageChanged = pyqtSignal(bytes)
-
-    def __post_init__(self):
-        super().__init__()
-
-    @cached_property
-    def client(self) -> BleakClient:
-        return BleakClient(self.device, disconnected_callback=self._handle_disconnect)
-
-    async def start(self):
-        global UART_TX_CHAR_UUID, UART_RX_CHAR_UUID
-        await self.client.connect()
-        svcs = await self.client.get_services()
-        for x in svcs.characteristics:
-           if svcs.characteristics[x].properties[0] == "write-without-response" and UART_TX_CHAR_UUID == "":
-                printLog("Set UART_TX_CHAR_UUID with {}".format(svcs.characteristics[x].uuid))
-                UART_TX_CHAR_UUID = svcs.characteristics[x].uuid
-           elif svcs.characteristics[x].properties[0] == "read" and UART_RX_CHAR_UUID == "":
-                printLog("Set UART_RX_CHAR_UUID with {}".format(svcs.characteristics[x].uuid))
-                UART_RX_CHAR_UUID = svcs.characteristics[x].uuid
-
-        #await self.client.start_notify(UART_TX_CHAR_UUID, self._handle_read)
-
-    async def stop(self):
-        await self.client.disconnect()
-
-    async def writeColor(self):
-            lista = [86, Colors["Red"], Colors["Green"], Colors["Blue"], (int(10 * 255 / 100) & 0xFF), 256-16, 256-86]
-            values = bytearray(lista)
-            try:
-                printLog("Change Color called R:{} G:{} B:{} ".format(Colors["Red"], Colors["Green"], Colors["Blue"]))
-                await self.client.write_gatt_char(UART_TX_CHAR_UUID, values, False)
-            except Exception as inst:
-                print(inst)
-
-    async def writeMode(self, idx):
-            global Speed
-            #new byte[] { 256 - 69, mode, (byte)(speed & 0xFF), 68 };
-            i_mode = Modes[idx]
-            lista = [256 - 69, i_mode, (Speed & 0xFF), 68]
-            values = bytearray(lista)
-            try:
-                printLog("Change Mode with ID {} ".format(i_mode))
-                await self.client.write_gatt_char(UART_TX_CHAR_UUID, values, False)
-            except Exception as inst:
-                print(inst)
-
-    async def writeMicState(self, enable):
-            
-            var_1 = -1
-            var_2 = -1
-            if enable:
-                var_1 = 256 - 16
-                var_2 = 50
-            else:
-                var_1 = 15
-                var_2 = 30
-            lista = [1, var_1, var_2,0 ,0, 24]
-            values = bytearray(lista)
-            try:
-                #printLog("Change Mode with ID {} ".format(i_mode))
-                await self.client.write_gatt_char(UART_TX_CHAR_UUID, values, False)
-            except Exception as inst:
-                print(inst)
-
-    #TODO: Implement disconnect function
-    def _handle_disconnect(self, device) -> None:
-        printLog("Device was disconnected")
-        # cancelling all tasks effectively ends the program
-        for task in asyncio.all_tasks():
-            task.cancel()
-
+import ExternalAudio
+import Microphone
+import BLEClass
+import Utils
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.resize(400, 300)
 
-        self._client = None
         self.setWindowIcon(QtGui.QIcon('about_icon.png'))
         self.setWindowTitle("PyHL")
         
@@ -169,7 +74,12 @@ class MainWindow(QMainWindow):
         self.deviceMic = QCheckBox(self)
         self.deviceMic.setText("Device Mic")
         self.deviceMic.setCheckState(Qt.Unchecked)
-        self.deviceMic.setGeometry(QRect(10, 110, 101, 20))
+        self.deviceMic.setGeometry(QRect(10, 90, 101, 20))
+
+        self.localMic = QCheckBox(self)
+        self.localMic.setText("Local Mic")
+        self.localMic.setCheckState(Qt.Unchecked)
+        self.localMic.setGeometry(QRect(10, 110, 101, 20))
 
         self.scan_button = QPushButton(self)
         self.scan_button.setText("Scan")
@@ -199,6 +109,7 @@ class MainWindow(QMainWindow):
         self.send_button.clicked.connect(self.handle_send)
         self.modeList.itemDoubleClicked.connect(self.selectMode)
         self.deviceMic.stateChanged.connect(self.handle_mic)
+        self.localMic.stateChanged.connect(self.handle_localmic)
 
 
     def selectMode(self, item):
@@ -213,20 +124,21 @@ class MainWindow(QMainWindow):
 
     @property
     def current_client(self):
-        return self._client
+        return Utils.client
 
     async def build_client(self, device):
-        if self._client is not None:
-            await self._client.stop()
-        self._client = QBleakClient(device)
-        self._client.messageChanged.connect(self.handle_message_changed)
-        await self._client.start()
+
+        if Utils.client is not None:
+            await Utils.client.stop()
+        Utils.client = BLEClass.QBleakClient(device)
+        Utils.client.messageChanged.connect(self.handle_message_changed)
+        await Utils.client.start()
 
     @qasync.asyncSlot()
     async def handle_connect(self):
         #self.log_edit.appendPlainText("try connect")
         device = self.devices_combobox.currentData()
-        if isinstance(device, BLEDevice):
+        if isinstance(device, BLEClass.BLEDevice):
             await self.build_client(device)
             self.label.setText("Connected")
             self.scan_button.setEnabled(False)
@@ -237,19 +149,18 @@ class MainWindow(QMainWindow):
     async def handle_scan(self):
         #self.log_edit.appendPlainText("Started scanner")
         self.devices.clear()
-        devices = await BleakScanner.discover()
+        devices = await BLEClass.BleakScanner.discover()
         self.devices.extend(devices)
         self.devices_combobox.clear()
         for i, device in enumerate(self.devices):
             if str(device.name).startswith("QHM"):
-                printLog("Found Device {}".format(device.name))
+                Utils.printLog(("Found Device {}".format(device.name)))
                 self.devices_combobox.insertItem(i, device.name, device)
         #self.log_edit.appendPlainText("Finish scanner")
 
     def changeSpeed(self, value):
-        global Speed
 
-        Speed = value
+        Utils.Speed = value
         if isModeUsed:
             self.handle_mode(self.modeList.currentIndex().row())
 
@@ -260,14 +171,16 @@ class MainWindow(QMainWindow):
         
     @qasync.asyncSlot()
     async def handle_send(self):
-        global Colors
-        global isModeUsed
 
-        isModeUsed = False
-        self.res = ColorSelector()
-        self.res.show()
-        Colors = res.GetValue()
-        await self.current_client.writeColor()
+        Utils.isModeUsed = False
+        self.res = QColorDialog.getColor()
+        try:
+            Utils.Colors["Red"] = self.res.red()
+            Utils.Colors["Blue"] = self.res.blue()
+            Utils.Colors["Green"] = self.res.green()
+            await self.current_client.writeColor()
+        except Exception as ex:
+            Utils.printLog("Colors error {}".format(ex))
 
 
     @qasync.asyncSlot()
@@ -280,6 +193,14 @@ class MainWindow(QMainWindow):
             await self.current_client.writeMicState(True)
         else:
             await self.current_client.writeMicState(False)
+        
+    @qasync.asyncSlot()
+    async def handle_localmic(self): 
+        if self.localMic.checkState() == Qt.Checked:
+            Utils.localAudio = True 
+            await ExternalAudio.start_stream()
+        else:
+            Utils.localAudio = False
 
 def main():
     app = QApplication(sys.argv)

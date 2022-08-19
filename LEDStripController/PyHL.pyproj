@@ -23,9 +23,12 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="ColorSelectorWin.py">
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="BLEClass.py" />
+    <Compile Include="dsp.py" />
+    <Compile Include="ExternalAudio.py" />
+    <Compile Include="melbank.py" />
+    <Compile Include="Microphone.py" />
+    <Compile Include="Utils.py" />
     <Compile Include="PyHL.py" />
   </ItemGroup>
   <ItemGroup>
