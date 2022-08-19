@@ -22,5 +22,6 @@ PyQT was implemented in order to make discover and connection easy.
 | ------ | ------ |
 | Bleak | [https://github.com/hbldh/bleak] |
 | PyQt5 | [https://github.com/PyQt5] |
+| Audio Reactive LED Strip | [https://github.com/scottlawsonbc/audio-reactive-led-strip] |
 
 
