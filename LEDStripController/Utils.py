@@ -1,4 +1,5 @@
 import os
+import pyaudio
 
 DEBUG_LOGS = False
 Modes = [37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 
@@ -7,11 +8,18 @@ Modes = [37, 38, 39, 40, 41, 42, 43, 44, 45, 46,
 
 Colors = {"Red":0, "Green":0, "Blue":0}
 
+InputDevices = {}
+p = pyaudio.PyAudio()
+selectedInputDevice = -1
+
 Speed = 0
 isModeUsed = False
 client = None
 
 localAudio = False
+GreenMic = True
+RedMic = True
+BlueMic = True
 
 N_PIXELS = 60
 """Number of pixels in the LED strip (must match ESP8266 firmware)"""

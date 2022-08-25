@@ -27,12 +27,8 @@
     <Compile Include="dsp.py" />
     <Compile Include="ExternalAudio.py" />
     <Compile Include="melbank.py" />
-    <Compile Include="Microphone.py" />
     <Compile Include="Utils.py" />
     <Compile Include="PyHL.py" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="about_icon.png" />
   </ItemGroup>
   <ItemGroup>
     <Interpreter Include="env\">
@@ -44,6 +40,9 @@
       <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
       <Architecture>X64</Architecture>
     </Interpreter>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="HappyLighting-py_icon.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

@@ -6,7 +6,6 @@ import pyaudio
 import numpy as np
 from scipy.ndimage.filters import gaussian_filter1d
 import Utils
-import Microphone
 import dsp
 #import led
 
@@ -111,19 +110,21 @@ def visualize_spectrum(y):
 
 @qasync.asyncSlot()
 async def updateLedColor(red, green, blue):
-    if red >= 256:
-        red = 255
+    if Utils.RedMic:
+        if red >= 256:
+            red = 255
+        Utils.Colors["Red"] = red
     
-    if green >= 256:
-        green = 255 
+    if Utils.GreenMic:
+        if green >= 256:
+            green = 255 
+        Utils.Colors["Green"] = green
 
-    if blue >= 256:
-        blue = 255
+    if Utils.BlueMic:
+        if blue >= 256:
+            blue = 255
+        Utils.Colors["Blue"] = blue
 
-
-    Utils.Colors["Red"] = 0
-    Utils.Colors["Blue"] = 0
-    Utils.Colors["Green"] = green
     await Utils.client.writeColor()
 
 @qasync.asyncSlot()
@@ -162,10 +163,10 @@ async def updateLed():
 
 @qasync.asyncSlot()    
 async def start_stream():
-    p = pyaudio.PyAudio()
     frames_per_buffer = int(Utils.MIC_RATE / Utils.FPS)
-    stream = p.open(format=pyaudio.paInt16,
+    stream = Utils.p.open(format=pyaudio.paInt16,
                     channels=1,
+                    input_device_index=Utils.selectedInputDevice,
                     rate=Utils.MIC_RATE,
                     input=True,
                     frames_per_buffer=frames_per_buffer)
@@ -187,7 +188,7 @@ async def start_stream():
                 print('Audio buffer has overflowed {} times'.format(overflows))
     stream.stop_stream()
     stream.close()
-    p.terminate()
+    Utils.p.terminate()
 
 @qasync.asyncSlot()
 async def microphone_update(y):

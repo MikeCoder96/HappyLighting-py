@@ -37,13 +37,16 @@ class QBleakClient(QObject):
                elif svcs.characteristics[x].properties[0] == "read" and UART_RX_CHAR_UUID == "":
                     Utils.printLog("Set UART_RX_CHAR_UUID with {}".format(svcs.characteristics[x].uuid))
                     UART_RX_CHAR_UUID = svcs.characteristics[x].uuid
-        except Exception as ex:
-            printLog("Something went wrong, try again {}".format(ex))
+        except asyncio.CancelledError as ex:
+            print(ex)
 
         #await self.client.start_notify(UART_TX_CHAR_UUID, self._handle_read)
 
     async def stop(self):
-        await self.client.disconnect()
+        try:
+            await self.client.disconnect()
+        except asyncio.CancelledError as ex:
+            pass
 
     async def writeColor(self):
             lista = [86, Utils.Colors["Red"], Utils.Colors["Green"], Utils.Colors["Blue"], (int(10 * 255 / 100) & 0xFF), 256-16, 256-86]
