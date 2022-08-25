@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="512" height="512" src="https://play-lh.googleusercontent.com/y47-UDb_eyUz4USZYotNeJRiD6QS5x-lXi37xdoIU-r4v_fIZTK5Gwc9mkzHuz60xDQ">
+  <img style="max-width: 100%;" width="60%" height="60%" src="https://raw.githubusercontent.com/MikeCoder96/HappyLighting-py/master/HappyLighting-py_logo.png">
 </p>
 
 # HappyLighting Python
