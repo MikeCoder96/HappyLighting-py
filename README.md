@@ -28,22 +28,6 @@ Any suggests? Write [here](https://github.com/MikeCoder96/HappyLighting-py/issue
 
 ---
 
-### How to use?
-
-PyQT was implemented in order to make discover and connection easy. 
-
----
-
-### Framework used
-
-| Framework | WebPage |
-| ------ | ------ |
-| Bleak | [https://github.com/hbldh/bleak] |
-| PyQt5 | [https://github.com/PyQt5] |
-| Audio Reactive LED Strip | [https://github.com/scottlawsonbc/audio-reactive-led-strip] |
-
----
-
 
 
 
