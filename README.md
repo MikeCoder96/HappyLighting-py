@@ -13,6 +13,21 @@
 
 ---
 
+### HappyLighting Support
+
+- [x] Change color
+- [x] Change mode & speed
+- [x] Enable integrated mic
+- [x] Emulated device mic (need improvements)
+- [ ] Device group and indipendet control
+- [ ] Change color getting input from screen area
+- [ ] Change color using mouse pointer
+- [ ] Custom mode (Possible with custom language)
+
+Any suggests? Write [here](https://github.com/MikeCoder96/HappyLighting-py/issues)!
+
+---
+
 ### How to use?
 
 PyQT was implemented in order to make discover and connection easy. 
