@@ -19,7 +19,7 @@
 - [x] Change mode & speed
 - [x] Enable integrated mic
 - [x] Emulated device mic (need improvements)
-- [ ] Elgato Stream Deck integration (REQUESTED)
+- [ ] Elgato Stream Deck integration
 - [ ] Device group and indipendet control
 - [ ] Change color getting input from screen area
 - [ ] Change color using mouse pointer
