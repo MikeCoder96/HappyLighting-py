@@ -13,19 +13,19 @@
 
 ---
 
-### How to use?
+### HappyLighting Support
 
-PyQT was implemented in order to make discover and connection easy. 
+- [x] Change color
+- [x] Change mode & speed
+- [x] Enable integrated mic
+- [x] Emulated device mic (need improvements)
+- [ ] Elgato Stream Deck integration
+- [ ] Device group and indipendet control
+- [ ] Change color getting input from screen area
+- [ ] Change color using mouse pointer
+- [ ] Custom mode (Possible with custom language)
 
----
-
-### Framework used
-
-| Framework | WebPage |
-| ------ | ------ |
-| Bleak | [https://github.com/hbldh/bleak] |
-| PyQt5 | [https://github.com/PyQt5] |
-| Audio Reactive LED Strip | [https://github.com/scottlawsonbc/audio-reactive-led-strip] |
+Any suggests? Write [here](https://github.com/MikeCoder96/HappyLighting-py/issues)!
 
 ---
 
