@@ -2,29 +2,23 @@ from bleak import BleakScanner, BleakClient
 import asyncio
 import sys
 import qasync
-from PyQt5 import QtGui
+import numpy as np
+import scipy.misc
+import scipy.cluster
+import cv2
+import binascii
+from PIL import ImageGrab
+from PyQt5.QtGui import *
 from turtle import color
 from dataclasses import dataclass
 from functools import cached_property
-from PyQt5.QtCore import QRect, Qt
-from PyQt5.QtWidgets import (
-    QApplication,
-    QComboBox,
-    QCheckBox,
-    QMainWindow,
-    QPlainTextEdit,
-    QPushButton,
-    QVBoxLayout,
-    QWidget,
-    QColorDialog,
-    QListWidget,
-    QLabel,
-    QSlider
-)
-
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
 import ExternalAudio
 import BLEClass
 import Utils
+import matplotlib.image as img
+from ctypes import windll
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -32,7 +26,8 @@ class MainWindow(QMainWindow):
         self.setFixedSize(400, 300)
 
         self.setWindowTitle("HappyLigthing-py")
-        self.setWindowIcon(QtGui.QIcon('HappyLighting-py_icon.png'))
+        self.setWindowIcon(QIcon('HappyLighting-py_icon.png'))
+
 
         self.modeList = QListWidget(self)
         self.modeList.setGeometry(210, 110, 180, 180)
@@ -58,6 +53,11 @@ class MainWindow(QMainWindow):
         self.localMic.setText("Local Mic")
         self.localMic.setCheckState(Qt.Unchecked)
         self.localMic.setGeometry(QRect(10, 90, 71, 20))
+
+        self.startCapture = QCheckBox(self)
+        self.startCapture.setText("Start Capture")
+        self.startCapture.setCheckState(Qt.Unchecked)
+        self.startCapture.setGeometry(QRect(290, 60, 101, 20))
 
         self.scan_button = QPushButton(self)
         self.scan_button.setText("Scan")
@@ -103,6 +103,7 @@ class MainWindow(QMainWindow):
         self.modeList.itemDoubleClicked.connect(self.selectMode)
         self.deviceMic.stateChanged.connect(self.handle_mic)
         self.localMic.stateChanged.connect(self.handle_localmic)
+        self.startCapture.stateChanged.connect(self.handle_startcapture)
         self.micDevices_combobox.currentIndexChanged.connect(self.updateMicDevice)
         self.bass_button.clicked.connect(self.handle_enabledisable)
         self.middle_button.clicked.connect(self.handle_enabledisable)
@@ -222,18 +223,16 @@ class MainWindow(QMainWindow):
         #self.log_edit.appendPlainText("Finish scanner")
 
     def changeSpeed(self, value):
-
         Utils.Speed = value
         if isModeUsed:
             self.handle_mode(self.modeList.currentIndex().row())
-
 
     def handle_enabledisable(self):
         whois = self.sender().text()
 
         if whois == "Bass":
             Utils.BlueMic = not Utils.BlueMic
-            Utils.Colors["Blue"] = 0
+            Utils.Colors["Blue"] = 0                     
         if whois == "Middle":
             Utils.RedMic = not Utils.RedMic
             Utils.Colors["Red"] = 0
@@ -288,15 +287,58 @@ class MainWindow(QMainWindow):
         else:
             Utils.localAudio = False
 
+    async def captureImage(self):
+        #NUM_CLUSTERS = 5
+        while Utils.captureMode:
+            def bincount_app(a):
+                try:
+                    a2D = a.reshape(-1,a.shape[-1])
+                    col_range = (256, 256, 256) # generically : a2D.max(0)+1
+                    a1D = np.ravel_multi_index(a2D.T, col_range)
+                    return np.unravel_index(np.bincount(a1D).argmax(), col_range)
+                except Exception as err:
+                    Utils.printLog(err)
+
+            
+
+            
+           
+            #print('reading image')
+            im = ImageGrab.grab()
+            #im = Image.open('image.jpg')
+            im = im.resize((150, 150))      # optional, to reduce time
+            im = np.array(im)
+
+            colour = bincount_app(im)
+            Utils.printLog(colour)
+            Utils.Colors["Red"] = colour[0]
+            Utils.Colors["Green"] = colour[1]
+            Utils.Colors["Blue"] = colour[2]
+            await self.current_client.writeColor()
+
+    @qasync.asyncSlot()
+    async def handle_startcapture(self): 
+        if self.startCapture.checkState() == Qt.Checked:
+            Utils.captureMode = True
+            loop = asyncio.get_running_loop()
+            loop.run_in_executor(None, lambda: asyncio.run(self.captureImage()))
+        else:
+            Utils.captureMode = False
+
+
 def main():
-    app = QApplication(sys.argv)
-    loop = qasync.QEventLoop(app)
+    user32 = windll.user32
+    user32.SetProcessDPIAware()
+    Utils.app = QApplication(sys.argv)
+    loop = qasync.QEventLoop(Utils.app)
     asyncio.set_event_loop(loop)
     w = MainWindow()
     w.show()
     with loop:
         loop.run_forever()
 
+def test():
+    pass
 
 if __name__ == "__main__":
     main()

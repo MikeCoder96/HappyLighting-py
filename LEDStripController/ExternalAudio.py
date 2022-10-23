@@ -148,18 +148,8 @@ async def updateLed():
     medianRed = max(r)
     medianGreen = max(g)
     medianBlue= max(b)
-    #print(medianRed)
-    #for i in range(Utils.N_PIXELS):
-    #    # blinkstick uses GRB format
-    #    newstrip[i*3] = g[i]
-    #    newstrip[i*3+1] = r[i]
-    #    newstrip[i*3+2] = b[i]
 
     await updateLedColor(int(medianRed), int(medianGreen), int(medianBlue))
-
-    #print(int(medianRed*15))
-    #send the data to the blinkstick
-    #stick.set_led_data(0, newstrip)
 
 @qasync.asyncSlot()    
 async def start_stream():
@@ -227,23 +217,3 @@ async def microphone_update(y):
         # Map filterbank output onto LED strip
         pixels = visualize_spectrum(mel)
         await updateLed()
-        #time.sleep(0.1)
-        #led.pixels = output
-        #led.update()
-        #if Utils.USE_GUI:
-            # Plot filterbank output
-            #x = np.linspace(Utils.MIN_FREQUENCY, Utils.MAX_FREQUENCY, len(mel))
-            #mel_curve.setData(x=x, y=fft_plot_filter.update(mel))
-            ## Plot the color channels
-            #r_curve.setData(y=led.pixels[0])
-            #g_curve.setData(y=led.pixels[1])
-            #b_curve.setData(y=led.pixels[2])
-
-    #if Utils.USE_GUI:
-    #    app.processEvents()
-    #
-    #if Utils.DISPLAY_FPS:
-    #    fps = frames_per_second()
-    #    if time.time() - 0.5 > prev_fps_update:
-    #        prev_fps_update = time.time()
-    #        print('FPS {:.0f} / {:.0f}'.format(fps, Utils.FPS))
