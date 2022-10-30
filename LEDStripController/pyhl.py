@@ -3,10 +3,7 @@ import asyncio
 import sys
 import qasync
 import numpy as np
-import scipy.misc
 import scipy.cluster
-import cv2
-import binascii
 from PIL import ImageGrab
 from PyQt5.QtGui import *
 from turtle import color

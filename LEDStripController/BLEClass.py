@@ -29,18 +29,20 @@ class QBleakClient(QObject):
         global UART_TX_CHAR_UUID, UART_RX_CHAR_UUID
         try:
             await self.client.connect()
-            svcs = await self.client.get_services()
-            for x in svcs.characteristics:
-               if svcs.characteristics[x].properties[0] == "write-without-response" and UART_TX_CHAR_UUID == "":
-                    Utils.printLog("Set UART_TX_CHAR_UUID with {}".format(svcs.characteristics[x].uuid))
-                    UART_TX_CHAR_UUID = svcs.characteristics[x].uuid
-               elif svcs.characteristics[x].properties[0] == "read" and UART_RX_CHAR_UUID == "":
-                    Utils.printLog("Set UART_RX_CHAR_UUID with {}".format(svcs.characteristics[x].uuid))
-                    UART_RX_CHAR_UUID = svcs.characteristics[x].uuid
+            for service in self.client.services:
+                if service.description == "Generic Access Profile":
+                    for char in service.characteristics:
+                        Utils.printLog("Set UART_RX_CHAR_UUID with {}".format(char.uuid))
+                        UART_RX_CHAR_UUID = char.uuid
+
+                elif service.description == "Vendor specific":
+                    for char in service.characteristics:
+                        if (','.join(char.properties) == "write-without-response,write") and UART_TX_CHAR_UUID == "":
+                            Utils.printLog("Set UART_TX_CHAR_UUID with {}".format(char.uuid))
+                            UART_TX_CHAR_UUID = char.uuid
+                            
         except asyncio.CancelledError as ex:
             print(ex)
-
-        #await self.client.start_notify(UART_TX_CHAR_UUID, self._handle_read)
 
     async def stop(self):
         try:
