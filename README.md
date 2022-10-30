@@ -19,11 +19,12 @@
 - [x] Change mode & speed
 - [x] Enable integrated mic
 - [x] Emulated device mic (need improvements)
+- [x] Change color getting input from screen
 - [ ] Elgato Stream Deck integration
 - [ ] Device group and indipendet control
-- [ ] Change color getting input from screen area
 - [ ] Change color using mouse pointer
 - [ ] Custom mode (Possible with custom language)
+- [ ] CLI Version
 
 Any suggests? Write [here](https://github.com/MikeCoder96/HappyLighting-py/issues)!
 
