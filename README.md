@@ -20,6 +20,7 @@
 - [x] Enable integrated mic
 - [x] Emulated device mic (need improvements)
 - [x] Change color getting input from screen
+- [ ] IFTTT Integration
 - [ ] Elgato Stream Deck integration
 - [ ] Device group and indipendet control
 - [ ] Change color using mouse pointer
