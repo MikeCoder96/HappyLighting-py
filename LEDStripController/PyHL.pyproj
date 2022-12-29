@@ -5,7 +5,7 @@
     <ProjectGuid>d0bf8ef8-8392-49ed-8774-4462a5237e86</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>PyHL.py</StartupFile>
+    <StartupFile>cmdver.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -13,6 +13,7 @@
     <Name>PyHL</Name>
     <RootNamespace>LEDStripController</RootNamespace>
     <InterpreterId>MSBuild|env|$(MSBuildProjectFullPath)</InterpreterId>
+    <IsWindowsApplication>False</IsWindowsApplication>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -24,6 +25,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="BLEClass.py" />
+    <Compile Include="cmdver.py" />
     <Compile Include="dsp.py" />
     <Compile Include="ExternalAudio.py" />
     <Compile Include="melbank.py" />
