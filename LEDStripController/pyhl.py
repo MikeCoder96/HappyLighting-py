@@ -67,6 +67,9 @@ class MainWindow(QMainWindow):
         self.devices_combobox = QComboBox(self)
         self.devices_combobox.setGeometry(QRect(90, 10, 121, 22))
 
+        self.device_address = QLineEdit(self)
+        self.device_address.setGeometry(QRect(160, 40, 121, 22))
+
         self.label1 = QLabel(self)
         self.label1.setGeometry(QRect(90, 40, 71, 20))    
         self.label1.setText("Disconnected")
@@ -194,7 +197,12 @@ class MainWindow(QMainWindow):
     @qasync.asyncSlot()
     async def handle_connect(self):
         #self.log_edit.appendPlainText("try connect")
-        device = self.devices_combobox.currentData()
+        s_Address = self.device_address.text()
+        if self.device_address.text() != "":
+            device = await BLEClass.BleakScanner.find_device_by_address(self.device_address.text())
+        else:
+            device = self.devices_combobox.currentData()
+
         if isinstance(device, BLEClass.BLEDevice):
             await self.build_client(device)
             self.label1.setText("Connected")
@@ -210,7 +218,7 @@ class MainWindow(QMainWindow):
     async def handle_scan(self):
         #self.log_edit.appendPlainText("Started scanner")
         self.devices.clear()
-        devices = await BLEClass.BleakScanner.discover()
+        devices = await BLEClass.BleakScanner.discover(timeout=8.0)
         self.devices.extend(devices)
         self.devices_combobox.clear()
         for i, device in enumerate(self.devices):
