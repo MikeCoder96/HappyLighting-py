@@ -60,6 +60,16 @@ class MainWindow(QMainWindow):
         self.scan_button.setText("Scan")
         self.scan_button.setGeometry(QRect(10, 10, 75, 23))
 
+        self.powerOn_button = QPushButton(self)
+        self.powerOn_button.setText("Power On")
+        self.powerOn_button.setGeometry(QRect(10, 65, 75, 23))
+        self.powerOn_button.clicked.connect(self.changePowerToOn)
+
+        self.powerOff_button = QPushButton(self)
+        self.powerOff_button.setText("Power Off")
+        self.powerOff_button.setGeometry(QRect(85, 65, 75, 23))
+        self.powerOff_button.clicked.connect(self.changePowerToOff)
+
         self.connect_button = QPushButton(self)
         self.connect_button.setText("Connect")
         self.connect_button.setGeometry(QRect(10, 40, 75, 23))
@@ -231,6 +241,20 @@ class MainWindow(QMainWindow):
         Utils.Speed = value
         if isModeUsed:
             self.handle_mode(self.modeList.currentIndex().row())
+
+    def changePowerToOn(self):
+        self.handle_powerOn()
+
+    def changePowerToOff(self):
+        self.handle_powerOff()
+
+    @qasync.asyncSlot()
+    async def handle_powerOff(self):
+        await self.current_client.writePower("Off")
+
+    @qasync.asyncSlot()
+    async def handle_powerOn(self):
+        await self.current_client.writePower("On")
 
     def handle_enabledisable(self):
         whois = self.sender().text()
