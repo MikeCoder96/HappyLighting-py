@@ -59,6 +59,18 @@ class QBleakClient(QObject):
             except Exception as inst:
                 print(inst)
 
+    async def writePower(self, state):
+            lista = [204, 35, 51]
+            if state == "Off":
+                lista = [204, 36, 51]
+
+            values = bytearray(lista)
+            try:
+                Utils.printLog("Change Power called Power : {}".format(state))
+                await self.client.write_gatt_char(UART_TX_CHAR_UUID, values, False)
+            except Exception as inst:
+                print(inst)
+
     async def writeMode(self, idx):
 
             #new byte[] { 256 - 69, mode, (byte)(speed & 0xFF), 68 };
