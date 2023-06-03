@@ -22,7 +22,7 @@ jobs:
     - name: Install dependencies
       run: |
          sudo apt update
-         sudo apt install python3-pyaudio -y
+         sudo apt install libasound-dev portaudio19-dev -y
     
     - uses: actions/checkout@v3
     - name: Set up Python 3.10
