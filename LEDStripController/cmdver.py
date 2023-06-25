@@ -9,12 +9,27 @@ devices = []
 async def handle_scan(all):
     global devices
     devices = await BLEClass.BleakScanner.discover()
-    devices.extend(devices)
     x = 0
+    newDevices = []
     for i, device in enumerate(devices):
         if str(device.name).startswith("QHM") or all:
+            newDevices.append(device)
             print(("{}) Device: {} Address: {}".format(x, device.name, device.address)))
             x+=1
+    devices=newDevices
+
+async def handle_ls():
+    x = 0
+    for i, device in enumerate(devices):
+        print(("{}) Device: {} Address: {}".format(x, device.name, device.address)))
+        x+=1
+            
+async def handle_macfilter(mac):
+    x = 0
+    for i, device in enumerate(devices.copy()):
+        if device.address!=mac:
+            devices.remove(device)
+    await handle_ls()
 
 def current_client():
     return Utils.client
@@ -52,15 +67,32 @@ async def main():
         if (cmd == "scan"):
             future = asyncio.ensure_future(handle_scan(False))
             await asyncio.wait({future}, return_when=asyncio.ALL_COMPLETED)
-
+            
         if (cmd == "scan *"):
             future = asyncio.ensure_future(handle_scan(True))
             await asyncio.wait({future}, return_when=asyncio.ALL_COMPLETED)
+
+        if (cmd == "ls" or cmd == "list"):
+            future = asyncio.ensure_future(handle_ls())
+            await asyncio.wait({future}, return_when=asyncio.ALL_COMPLETED)
+            
+        if (cmd.startswith("filter")):
+            cmd=cmd.removeprefix("filter")
+            address=""
+            if not cmd.startswith(" "):
+                address=input("Enter MAC address:")
+            else:
+                address=cmd.replace(" ","")
+            future = asyncio.ensure_future(handle_macfilter(address))
+            await asyncio.wait({future}, return_when=asyncio.ALL_COMPLETED)
             
         if (cmd == "connect"):
-            selection=int(input("Select Device >"))
-            future = asyncio.ensure_future(handle_connect(selection))
-            await asyncio.wait({future}, return_when=asyncio.ALL_COMPLETED)
+            if len(devices) > 0 :
+                selection=0
+                if len(devices)> 1 :    
+                    selection=int(input("Select Device :"))
+                future = asyncio.ensure_future(handle_connect(selection))
+                await asyncio.wait({future}, return_when=asyncio.ALL_COMPLETED)
 
         if (cmd == "color"):
             future = asyncio.ensure_future(handle_writeColor())
