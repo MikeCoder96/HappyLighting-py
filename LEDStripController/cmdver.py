@@ -3,6 +3,7 @@ import asyncio
 import ExternalAudio
 import BLEClass
 import Utils
+import time
 
 devices = []
 
@@ -40,13 +41,22 @@ async def handle_macfilter(mac):
 def current_client():
     return Utils.client
 
-async def handle_writeColor():
-
-    Utils.isModeUsed = False
-    try:
+async def handle_writeColor(cmd):    
+    cmd=cmd.removeprefix("color")
+    if not cmd.startswith(" "):
         Utils.Colors["Red"] = int(input("Red (1-255):"))
         Utils.Colors["Green"] = int(input("Green (1-255):"))
         Utils.Colors["Blue"] = int(input("Blue (1-255):"))
+    else:
+        cmd=cmd.replace(" ","")
+        colors=cmd.split(",")
+        Utils.Colors["Red"] = int(colors[0])
+        Utils.Colors["Green"] = int(colors[1])
+        Utils.Colors["Blue"] = int(colors[2])
+
+
+    Utils.isModeUsed = False
+    try:
         await current_client().writeColor()
     except Exception as ex:
         Utils.printLog("Colors error {}".format(ex))
@@ -80,84 +90,90 @@ async def handle_connect(select):
 async def main():
     while True:
         cmd = input("()> ")
-        if (cmd == "help"):
-            print("")
-            print("scan")
-            print("  scans for devices with name starting with QHM")
-            print("")
-            print("scan *")
-            print("OR")
-            print("scanall")
-            print("  scans for all devices")
-            print("")
-            print("filter")
-            print("OR")
-            print("filter 00:00:00:00:00:00")
-            print("  filter devices by mac address")
-            print("")
-            print("ls")
-            print("OR")
-            print("list")
-            print("  list known devices")
-            print("")
-            print("connect")
-            print("  connect to a device")
-            print("")
-            print("color")
-            print("  send a color")
-            print("")
-            print("on")
-            print("  turn on lights")
-            print("")
-            print("off")
-            print("  turn off lights")
-            print("")
-            print("quit")
-            print("  quit program gracefully")
+        cmds = cmd.split(";")
+        for subcmd in cmds:
+            await handle_command(subcmd)
+            #if len(cmds) > 1:
+                #time.sleep(0.1)
+        
+async def handle_command(cmd):
+    if (cmd == "help"):
+        print("")
+        print("scan")
+        print("  scans for devices with name starting with QHM")
+        print("")
+        print("scan *")
+        print("OR")
+        print("scanall")
+        print("  scans for all devices")
+        print("")
+        print("filter")
+        print("OR")
+        print("filter 00:00:00:00:00:00")
+        print("  filter devices by mac address")
+        print("")
+        print("ls")
+        print("OR")
+        print("list")
+        print("  list known devices")
+        print("")
+        print("connect")
+        print("  connect to a device")
+        print("")
+        print("color")
+        print("  send a color")
+        print("")
+        print("on")
+        print("  turn on lights")
+        print("")
+        print("off")
+        print("  turn off lights")
+        print("")
+        print("quit")
+        print("  quit program gracefully")
             
-        if (cmd == "scan"):
-            future = asyncio.ensure_future(handle_scan(False))
-            await asyncio.wait({future}, return_when=asyncio.ALL_COMPLETED)
+    if (cmd == "scan"):
+        future = asyncio.ensure_future(handle_scan(False))
+        await asyncio.wait({future}, return_when=asyncio.ALL_COMPLETED)
             
-        if (cmd == "scan *" or cmd == "scanall"):
-            future = asyncio.ensure_future(handle_scan(True))
+    if (cmd == "scan *" or cmd == "scanall"):
+        future = asyncio.ensure_future(handle_scan(True))
+        await asyncio.wait({future}, return_when=asyncio.ALL_COMPLETED)
+
+    if (cmd == "ls" or cmd == "list"):
+        future = asyncio.ensure_future(handle_ls())
+        await asyncio.wait({future}, return_when=asyncio.ALL_COMPLETED)
+            
+    if (cmd.startswith("filter")):
+        cmd=cmd.removeprefix("filter")
+        address=""
+        if not cmd.startswith(" "):
+            address=input("Enter MAC address:")
+        else:
+            address=cmd.replace(" ","")
+        future = asyncio.ensure_future(handle_macfilter(address))
+        await asyncio.wait({future}, return_when=asyncio.ALL_COMPLETED)
+            
+    if (cmd == "connect"):
+        if len(devices) > 0 :
+            selection=0
+            if len(devices)> 1 :    
+                selection=int(input("Select Device :"))
+            future = asyncio.ensure_future(handle_connect(selection))
             await asyncio.wait({future}, return_when=asyncio.ALL_COMPLETED)
 
-        if (cmd == "ls" or cmd == "list"):
-            future = asyncio.ensure_future(handle_ls())
-            await asyncio.wait({future}, return_when=asyncio.ALL_COMPLETED)
+    if (cmd == "on"):
+        future = asyncio.ensure_future(handle_power(True))
+        await asyncio.wait({future}, return_when=asyncio.ALL_COMPLETED)
+
+    if (cmd == "off"):
+        future = asyncio.ensure_future(handle_power(False))
+        await asyncio.wait({future}, return_when=asyncio.ALL_COMPLETED)
             
-        if (cmd.startswith("filter")):
-            cmd=cmd.removeprefix("filter")
-            address=""
-            if not cmd.startswith(" "):
-                address=input("Enter MAC address:")
-            else:
-                address=cmd.replace(" ","")
-            future = asyncio.ensure_future(handle_macfilter(address))
-            await asyncio.wait({future}, return_when=asyncio.ALL_COMPLETED)
-            
-        if (cmd == "connect"):
-            if len(devices) > 0 :
-                selection=0
-                if len(devices)> 1 :    
-                    selection=int(input("Select Device :"))
-                future = asyncio.ensure_future(handle_connect(selection))
-                await asyncio.wait({future}, return_when=asyncio.ALL_COMPLETED)
+    if (cmd.startswith("color")):
+        future = asyncio.ensure_future(handle_writeColor(cmd))
+        await asyncio.wait({future}, return_when=asyncio.ALL_COMPLETED)
 
-        if (cmd == "on"):
-            future = asyncio.ensure_future(handle_power(True))
-            await asyncio.wait({future}, return_when=asyncio.ALL_COMPLETED)
-
-        if (cmd == "off"):
-            future = asyncio.ensure_future(handle_power(False))
-            await asyncio.wait({future}, return_when=asyncio.ALL_COMPLETED)
-            
-        if (cmd == "color"):
-            future = asyncio.ensure_future(handle_writeColor())
-            await asyncio.wait({future}, return_when=asyncio.ALL_COMPLETED)
-
-        if (cmd == "quit"):
-            quit()
-
+    if (cmd == "quit"):
+        quit()
 asyncio.run(main())
