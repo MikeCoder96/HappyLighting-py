@@ -4,6 +4,7 @@ import ExternalAudio
 import BLEClass
 import Utils
 import time
+import sys
 
 devices = []
 
@@ -21,14 +22,14 @@ async def handle_scan(all):
     for i, device in enumerate(devices):
         if str(device.name).startswith("QHM") or all:
             newDevices.append(device)
-            print(("{}) Device: {} Address: {}".format(x, device.name, device.address)))
             x+=1
     devices=newDevices
+    await handle_ls()
 
 async def handle_ls():
     x = 0
     for i, device in enumerate(devices):
-        print(("{}) Device: {} Address: {}".format(x, device.name, device.address)))
+        Utils.printLog(("{}) Device: {} Address: {}".format(x, device.name, device.address)))
         x+=1
             
 async def handle_macfilter(mac):
@@ -80,7 +81,7 @@ async def build_client(device):
     Utils.client = BLEClass.QBleakClient(device)
     Utils.client.messageChanged.connect(handle_message_changed)
     await Utils.client.start()
-    print("Connected")
+    Utils.printLog("Connected")
 
 async def handle_connect(select):
     global devices
@@ -88,7 +89,25 @@ async def handle_connect(select):
     await build_client(device)
 
 async def main():
-    while True:
+    args = sys.argv[1:]
+    Utils.DEBUG_LOGS = True
+    loop = True
+    x=0
+    for arg in args:
+        if arg=="/c":
+            cmd=args[x+1]
+            loop=False
+            cmds = cmd.split(";")
+            for subcmd in cmds:
+                await handle_command(subcmd)
+        if arg=="/pretty":
+            print("not implemented yet - will add color support to terminal output")
+        if arg=="/quiet":
+            Utils.DEBUG_LOGS = False
+        if arg=="/verbose":
+            Utils.DEBUG_LOGS = True
+        x+=1
+    while loop:
         cmd = input("()> ")
         cmds = cmd.split(";")
         for subcmd in cmds:
@@ -165,6 +184,13 @@ async def handle_command(cmd):
     if (cmd == "on"):
         future = asyncio.ensure_future(handle_power(True))
         await asyncio.wait({future}, return_when=asyncio.ALL_COMPLETED)
+
+    if (cmd == "wait"):
+        cmdsplit = cmd.split(" ")
+        if len(cmdsplit)<2 :
+            time.sleep(1)
+        else:
+            time.sleep(int(cmdsplit[1]))
 
     if (cmd == "off"):
         future = asyncio.ensure_future(handle_power(False))
