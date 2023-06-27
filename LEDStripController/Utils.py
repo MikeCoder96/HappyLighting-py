@@ -1,7 +1,7 @@
 import os
 import pyaudio
 
-DEBUG_LOGS = False
+DEBUG_LOGS = True
 Modes = [37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 
          47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 
          97, 98, 99]
