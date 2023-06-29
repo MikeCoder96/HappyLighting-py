@@ -6,7 +6,7 @@ import BLEClass
 import Utils
 import time
 import sys
-import sys
+import os 
 from struct import *
 
 devices = []
@@ -117,6 +117,9 @@ async def main():
     Utils.DEBUG_LOGS = True
     loop = True
     x=0
+    if sys.platform == "win32":
+        os.system('color')
+
     for arg in args:
         if arg=="/c":
             cmd=args[x+1]
@@ -125,6 +128,7 @@ async def main():
             for subcmd in cmds:
                 await handle_command(subcmd)
         if arg=="/pretty":
+            Utils.PRETTY=True
             print("not implemented yet - will add color support to terminal output")
         if arg=="/quiet":
             Utils.DEBUG_LOGS = False

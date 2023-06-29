@@ -35,6 +35,7 @@
     <Compile Include="vis_InvertedRainbow.py" />
     <Compile Include="vis_Rainbow.py" />
     <Compile Include="vis_NorthernLights.py" />
+    <Compile Include="VTCodes.py" />
   </ItemGroup>
   <ItemGroup>
     <Interpreter Include="env\">
