@@ -187,7 +187,7 @@ async def handle_command(cmd):
         print("")
         print("To chain multiple commands, separate them with semicolons, no spaces")
         print("for  example:")
-        print("  ls *;filter 00:00:00:00:00:00;connect;on;color 255,0,0;wait;color 255,255,255;wait;color 255,0,0;wait;off;quit")
+        print("  scanall;filter 00:00:00:00:00:00;connect;on;color 255,0,0;wait;color 255,255,255;wait;color 255,0,0;wait;off;quit")
         print("")
         print("Command line arguments")
         print ("python.exe cmdver.py [/quiet|/verbose] [/pretty] [/c \"command string\"]")
