@@ -85,9 +85,10 @@ async def handle_audio(device):
                 Utils.InputDevices[i] = tmp_device
                 print(str(i)+": "+tmp_device["name"])
         device=input("Select device index:")
-    Utils.selectedInputDevice=int(device)
+    Utils.selectedInputDevice=int(device.split(" ")[0])
     Utils.localAudio=True
-    await handle_visset("vis_"+"InvertedRainbow")
+    if(len(device.split(" "))>1!=NULL):
+        await handle_visset("vis_"+device.split(" ")[1])
     await ExternalAudio.start_stream()
     print("Audio Over")
 
