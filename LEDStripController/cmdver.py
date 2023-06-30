@@ -1,3 +1,4 @@
+from asyncio.windows_events import NULL
 from bleak import BleakScanner, BleakClient
 import asyncio
 import ExternalAudio
@@ -5,6 +6,8 @@ import BLEClass
 import Utils
 import time
 import sys
+import os 
+from struct import *
 
 devices = []
 
@@ -72,6 +75,27 @@ async def handle_power(turnOn):
     except Exception as ex:
         Utils.printLog("Power error {}".format(ex))
 
+async def handle_audio(device):
+    if (device=="" or device==NULL):        
+        info = Utils.p.get_host_api_info_by_index(0)
+        numdevices = info.get('deviceCount')
+        for i in range(0, numdevices):
+            if (Utils.p.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
+                tmp_device = Utils.p.get_device_info_by_host_api_device_index(0, i)
+                Utils.InputDevices[i] = tmp_device
+                print(str(i)+": "+tmp_device["name"])
+        device=input("Select device index:")
+    Utils.selectedInputDevice=int(device.split(" ")[0])
+    Utils.localAudio=True
+    if(len(device.split(" "))>1!=NULL):
+        await handle_visset("vis_"+device.split(" ")[1])
+    await ExternalAudio.start_stream()
+    print("Audio Over")
+
+async def handle_visset(cmd):    
+
+    exec("import "+cmd+" as visualizer;ExternalAudio.visualize_spectrum=visualizer.visualize_spectrum")
+
 def handle_message_changed(message):
     pass
 
@@ -93,6 +117,9 @@ async def main():
     Utils.DEBUG_LOGS = True
     loop = True
     x=0
+    if sys.platform == "win32":
+        os.system('color')
+
     for arg in args:
         if arg=="/c":
             cmd=args[x+1]
@@ -101,6 +128,7 @@ async def main():
             for subcmd in cmds:
                 await handle_command(subcmd)
         if arg=="/pretty":
+            Utils.PRETTY=True
             print("not implemented yet - will add color support to terminal output")
         if arg=="/quiet":
             Utils.DEBUG_LOGS = False
@@ -114,7 +142,7 @@ async def main():
             await handle_command(subcmd)
             #if len(cmds) > 1:
                 #time.sleep(0.1)
-        
+ 
 async def handle_command(cmd):
     if (cmd == "help"):
         print("")
@@ -139,8 +167,10 @@ async def handle_command(cmd):
         print("connect")
         print("  connect to a device")
         print("")
-        print("color")
+        print("color [red],[green],[blue]")
         print("  send a color")
+        print("  for example:")
+        print("    color 255,0,0")
         print("")
         print("on")
         print("  turn on lights")
@@ -148,8 +178,27 @@ async def handle_command(cmd):
         print("off")
         print("  turn off lights")
         print("")
+        print("audio [input device] [visualizer script]")
+        print("  start audio visualizer. Without parameters, uses default visualizer and asks for input device.")
+        print("  for example:")
+        print("    audio 0 NorthernLights")
+        print("")
+        print("wait [milliseconds]")
+        print("   Waits for specified milliseconds - if none specified, waits a second")
+        print("")
         print("quit")
         print("  quit program gracefully")
+        print("")
+        print("To chain multiple commands, separate them with semicolons, no spaces")
+        print("for  example:")
+        print("  scanall;filter 00:00:00:00:00:00;connect;on;color 255,0,0;wait;color 255,255,255;wait;color 255,0,0;wait;off;quit")
+        print("")
+        print("Command line arguments")
+        print ("python.exe cmdver.py [/quiet|/verbose] [/pretty] [/c \"command string\"]")
+        print("  /quiet: Turns off script debug output")
+        print("  /verbose: Turns on script debug output")
+        print("  /pretty: To be implemented - will enable VT100 color code use")
+        print("  /c \"command string\": Stick your command string  in the quotes, it'll run all the steps in the command string  then go back to the command loop (add quit to the command string to quit after command string)")
             
     if (cmd == "scan"):
         future = asyncio.ensure_future(handle_scan(False))
@@ -173,6 +222,14 @@ async def handle_command(cmd):
         future = asyncio.ensure_future(handle_macfilter(address))
         await asyncio.wait({future}, return_when=asyncio.ALL_COMPLETED)
             
+    if (cmd.startswith("audio")):
+        if(cmd.startswith("audio ")):
+            cmd = cmd.replace("audio ","")
+            future = asyncio.ensure_future(handle_audio(cmd))            
+        else:
+            future = asyncio.ensure_future(handle_audio(NULL))
+        await asyncio.wait({future}, return_when=asyncio.ALL_COMPLETED)
+
     if (cmd == "connect"):
         if len(devices) > 0 :
             selection=0
@@ -185,12 +242,12 @@ async def handle_command(cmd):
         future = asyncio.ensure_future(handle_power(True))
         await asyncio.wait({future}, return_when=asyncio.ALL_COMPLETED)
 
-    if (cmd == "wait"):
+    if (cmd.startswith("wait")):
         cmdsplit = cmd.split(" ")
         if len(cmdsplit)<2 :
             time.sleep(1)
         else:
-            time.sleep(int(cmdsplit[1]))
+            time.sleep(int(cmdsplit[1])/1000)
 
     if (cmd == "off"):
         future = asyncio.ensure_future(handle_power(False))

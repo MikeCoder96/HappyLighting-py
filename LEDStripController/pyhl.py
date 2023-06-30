@@ -60,12 +60,25 @@ class MainWindow(QMainWindow):
         self.scan_button.setText("Scan")
         self.scan_button.setGeometry(QRect(10, 10, 75, 23))
 
+        self.powerOn_button = QPushButton(self)
+        self.powerOn_button.setText("Power On")
+        self.powerOn_button.setGeometry(QRect(10, 65, 75, 23))
+        self.powerOn_button.clicked.connect(self.changePowerToOn)
+
+        self.powerOff_button = QPushButton(self)
+        self.powerOff_button.setText("Power Off")
+        self.powerOff_button.setGeometry(QRect(85, 65, 75, 23))
+        self.powerOff_button.clicked.connect(self.changePowerToOff)
+
         self.connect_button = QPushButton(self)
         self.connect_button.setText("Connect")
         self.connect_button.setGeometry(QRect(10, 40, 75, 23))
 
         self.devices_combobox = QComboBox(self)
         self.devices_combobox.setGeometry(QRect(90, 10, 121, 22))
+
+        self.device_address = QLineEdit(self)
+        self.device_address.setGeometry(QRect(160, 40, 121, 22))
 
         self.label1 = QLabel(self)
         self.label1.setGeometry(QRect(90, 40, 71, 20))    
@@ -194,7 +207,12 @@ class MainWindow(QMainWindow):
     @qasync.asyncSlot()
     async def handle_connect(self):
         #self.log_edit.appendPlainText("try connect")
-        device = self.devices_combobox.currentData()
+        s_Address = self.device_address.text()
+        if self.device_address.text() != "":
+            device = await BLEClass.BleakScanner.find_device_by_address(self.device_address.text())
+        else:
+            device = self.devices_combobox.currentData()
+
         if isinstance(device, BLEClass.BLEDevice):
             await self.build_client(device)
             self.label1.setText("Connected")
@@ -210,7 +228,7 @@ class MainWindow(QMainWindow):
     async def handle_scan(self):
         #self.log_edit.appendPlainText("Started scanner")
         self.devices.clear()
-        devices = await BLEClass.BleakScanner.discover()
+        devices = await BLEClass.BleakScanner.discover(timeout=8.0)
         self.devices.extend(devices)
         self.devices_combobox.clear()
         for i, device in enumerate(self.devices):
@@ -223,6 +241,20 @@ class MainWindow(QMainWindow):
         Utils.Speed = value
         if isModeUsed:
             self.handle_mode(self.modeList.currentIndex().row())
+
+    def changePowerToOn(self):
+        self.handle_powerOn()
+
+    def changePowerToOff(self):
+        self.handle_powerOff()
+
+    @qasync.asyncSlot()
+    async def handle_powerOff(self):
+        await self.current_client.writePower("Off")
+
+    @qasync.asyncSlot()
+    async def handle_powerOn(self):
+        await self.current_client.writePower("On")
 
     def handle_enabledisable(self):
         whois = self.sender().text()

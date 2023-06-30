@@ -78,6 +78,8 @@ N_ROLLING_HISTORY = 2
 MIN_VOLUME_THRESHOLD = 1e-7
 """No music visualization displayed if recorded audio volume below threshold"""
 
+PRETTY=False
+"""Controls outputting color codes"""
 
 def printLog(text):
     if DEBUG_LOGS:
