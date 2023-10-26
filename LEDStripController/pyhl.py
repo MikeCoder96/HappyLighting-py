@@ -15,13 +15,30 @@ import ExternalAudio
 import BLEClass
 import Utils
 import matplotlib.image as img
-from ctypes import windll
+try:
+    from ctypes import windll
+except ImportError:
+    print("ctypes not imported due to different OS (Non Windows)")
+
 
 class MainWindow(QMainWindow):
+    def closeEvent(self, event):
+        if self.device_address.text() != "":
+            device = BLEClass.BleakScanner.find_device_by_address(self.device_address.text())
+        else:
+            device = self.devices_combobox.currentData()        
+
+        if isinstance(device, BLEClass.BLEDevice):
+            self.build_client(device)
+            self.connect_button.disconnect()
+            self.connect_button.clicked.connect(self.destroy_client)
+            self.connect_button.setText("Disconnect")
+
     def __init__(self):
+        global isModeUsed
         super().__init__()
         self.setFixedSize(400, 300)
-
+        isModeUsed = False
         self.setWindowTitle("HappyLigthing-py")
         self.setWindowIcon(QIcon('HappyLighting-py_icon.png'))
 
@@ -59,6 +76,7 @@ class MainWindow(QMainWindow):
         self.scan_button = QPushButton(self)
         self.scan_button.setText("Scan")
         self.scan_button.setGeometry(QRect(10, 10, 75, 23))
+        
 
         self.connect_button = QPushButton(self)
         self.connect_button.setText("Connect")
@@ -66,6 +84,16 @@ class MainWindow(QMainWindow):
 
         self.devices_combobox = QComboBox(self)
         self.devices_combobox.setGeometry(QRect(90, 10, 121, 22))
+                # Label Create 
+        self.label = QLabel(self) 
+        self.label.setGeometry(QRect(70, 90, 10, 10)) 
+        self.label.setMinimumSize(QSize(300, 300)) 
+        self.label.setMaximumSize(QSize(300, 300)) 
+        self.label.setObjectName("lb1") 
+        # Loading the GIF 
+        self.movie = QMovie("Flower.gif") 
+        self.label.setMovie(self.movie) 
+        self.label.hide()
 
         self.device_address = QLineEdit(self)
         self.device_address.setGeometry(QRect(160, 40, 121, 22))
@@ -160,7 +188,6 @@ class MainWindow(QMainWindow):
 
     def selectMode(self, item):
         global isModeUsed
-
         isModeUsed = True
         self.handle_mode(self.modeList.indexFromItem(item).row())
 
@@ -218,6 +245,8 @@ class MainWindow(QMainWindow):
     async def handle_scan(self):
         #self.log_edit.appendPlainText("Started scanner")
         self.devices.clear()
+        self.label.show()
+        self.movie.start()
         devices = await BLEClass.BleakScanner.discover(timeout=8.0)
         self.devices.extend(devices)
         self.devices_combobox.clear()
@@ -226,8 +255,11 @@ class MainWindow(QMainWindow):
                 Utils.printLog(("Found Device {}".format(device.name)))
                 self.devices_combobox.insertItem(i, device.name, device)
         #self.log_edit.appendPlainText("Finish scanner")
+        self.movie.stop() 
+        self.label.hide()
 
     def changeSpeed(self, value):
+        global isModeUsed
         Utils.Speed = value
         if isModeUsed:
             self.handle_mode(self.modeList.currentIndex().row())
@@ -236,14 +268,11 @@ class MainWindow(QMainWindow):
         whois = self.sender().text()
 
         if whois == "Bass":
-            Utils.BlueMic = not Utils.BlueMic
-            Utils.Colors["Blue"] = 0                     
+            Utils.BlueMic = not Utils.BlueMic                  
         if whois == "Middle":
             Utils.RedMic = not Utils.RedMic
-            Utils.Colors["Red"] = 0
         if whois == "High":
             Utils.GreenMic = not Utils.GreenMic
-            Utils.Colors["Green"] = 0
 
         self.handle_rewrite()
 
@@ -262,10 +291,7 @@ class MainWindow(QMainWindow):
         Utils.isModeUsed = False
         self.res = QColorDialog.getColor()
         try:
-            Utils.Colors["Red"] = self.res.red()
-            Utils.Colors["Blue"] = self.res.blue()
-            Utils.Colors["Green"] = self.res.green()
-            await self.current_client.writeColor()
+            await self.current_client.writeColor(self.res.red(), self.res.green(), self.res.blue())
         except Exception as ex:
             Utils.printLog("Colors error {}".format(ex))
 
@@ -279,13 +305,21 @@ class MainWindow(QMainWindow):
 
     @qasync.asyncSlot()
     async def handle_mic(self):
+        if self.localMic.checkState() == Qt.Checked:
+             self.localMic.setCheckState(False)
+             Utils.localAudio = False
+             
         if self.deviceMic.checkState() == Qt.Checked:
             await self.current_client.writeMicState(True)
         else:
             await self.current_client.writeMicState(False)
         
     @qasync.asyncSlot()
-    async def handle_localmic(self): 
+    async def handle_localmic(self):         
+        if self.deviceMic.checkState() == Qt.Checked:
+             self.deviceMic.setCheckState(False)
+             await self.current_client.writeMicState(False)
+             
         if self.localMic.checkState() == Qt.Checked and Utils.selectedInputDevice >= 0:
             Utils.localAudio = True 
             await ExternalAudio.start_stream()
@@ -316,10 +350,7 @@ class MainWindow(QMainWindow):
 
             colour = bincount_app(im)
             Utils.printLog(colour)
-            Utils.Colors["Red"] = colour[0]
-            Utils.Colors["Green"] = colour[1]
-            Utils.Colors["Blue"] = colour[2]
-            await self.current_client.writeColor()
+            await self.current_client.writeColor(colour[0], colour[1], colour[2])
 
     @qasync.asyncSlot()
     async def handle_startcapture(self): 
@@ -332,9 +363,13 @@ class MainWindow(QMainWindow):
 
 
 def main():
-    user32 = windll.user32
-    user32.SetProcessDPIAware()
+    try:
+        user32 = windll.user32
+        user32.SetProcessDPIAware()
+    except:
+        pass
     Utils.app = QApplication(sys.argv)
+    #Utils.app.aboutToQuit.connect(myExitHandler)
     loop = qasync.QEventLoop(Utils.app)
     asyncio.set_event_loop(loop)
     w = MainWindow()

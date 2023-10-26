@@ -50,11 +50,11 @@ class QBleakClient(QObject):
         except asyncio.CancelledError as ex:
             pass
 
-    async def writeColor(self):
-            lista = [86, Utils.Colors["Red"], Utils.Colors["Green"], Utils.Colors["Blue"], (int(10 * 255 / 100) & 0xFF), 256-16, 256-86]
+    async def writeColor(self, R=0, G=0, B=0):
+            lista = [86, R, G, B, (int(10 * 255 / 100) & 0xFF), 256-16, 256-86]
             values = bytearray(lista)
             try:
-                Utils.printLog("Change Color called R:{} G:{} B:{} ".format(Utils.Colors["Red"], Utils.Colors["Green"], Utils.Colors["Blue"]))
+                Utils.printLog("Change Color called R:{} G:{} B:{} ".format(R, G, B))
                 await self.client.write_gatt_char(UART_TX_CHAR_UUID, values, False)
             except Exception as inst:
                 print(inst)

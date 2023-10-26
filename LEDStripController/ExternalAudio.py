@@ -108,26 +108,23 @@ def visualize_spectrum(y):
     output = np.array([r, g,b]) * 255
     return output
 
-@qasync.asyncSlot()
+
 async def updateLedColor(red, green, blue):
+
     if Utils.RedMic:
         if red >= 256:
             red = 255
-        Utils.Colors["Red"] = red
     
     if Utils.GreenMic:
         if green >= 256:
             green = 255 
-        Utils.Colors["Green"] = green
 
     if Utils.BlueMic:
         if blue >= 256:
             blue = 255
-        Utils.Colors["Blue"] = blue
 
-    await Utils.client.writeColor()
+    await Utils.client.writeColor(red, green, blue)
 
-@qasync.asyncSlot()
 async def updateLed():
     """Writes new LED values to the Blinkstick.
         This function updates the LED strip with new values.
@@ -150,8 +147,7 @@ async def updateLed():
     medianBlue= max(b)
 
     await updateLedColor(int(medianRed), int(medianGreen), int(medianBlue))
-
-@qasync.asyncSlot()    
+ 
 async def start_stream():
     frames_per_buffer = int(Utils.MIC_RATE / Utils.FPS)
     stream = Utils.p.open(format=pyaudio.paInt16,
@@ -180,7 +176,6 @@ async def start_stream():
     stream.close()
     Utils.p.terminate()
 
-@qasync.asyncSlot()
 async def microphone_update(y):
     global y_roll, prev_rms, prev_exp, prev_fps_update, pixels
     # Normalize samples between 0 and 1

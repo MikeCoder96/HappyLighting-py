@@ -6,8 +6,6 @@ Modes = [37, 38, 39, 40, 41, 42, 43, 44, 45, 46,
          47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 
          97, 98, 99]
 
-Colors = {"Red":0, "Green":0, "Blue":0}
-
 InputDevices = {}
 p = pyaudio.PyAudio()
 selectedInputDevice = -1
