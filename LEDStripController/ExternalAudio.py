@@ -114,14 +114,20 @@ async def updateLedColor(red, green, blue):
     if Utils.RedMic:
         if red >= 256:
             red = 255
+    else:
+        red = 0
     
     if Utils.GreenMic:
         if green >= 256:
             green = 255 
+    else:
+        green = 0
 
     if Utils.BlueMic:
         if blue >= 256:
             blue = 255
+    else:
+        blue = 0
 
     await Utils.client.writeColor(red, green, blue)
 
@@ -172,9 +178,11 @@ async def start_stream():
             if time.time() > prev_ovf_time + 1:
                 prev_ovf_time = time.time()
                 print('Audio buffer has overflowed {} times'.format(overflows))
+    
     stream.stop_stream()
     stream.close()
     Utils.p.terminate()
+    Utils.p = pyaudio.PyAudio()
 
 async def microphone_update(y):
     global y_roll, prev_rms, prev_exp, prev_fps_update, pixels

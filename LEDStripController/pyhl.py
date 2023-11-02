@@ -1,6 +1,7 @@
 from bleak import BleakScanner, BleakClient
 import asyncio
 import sys
+import pyaudio
 import qasync
 import numpy as np
 import scipy.cluster
@@ -35,10 +36,11 @@ class MainWindow(QMainWindow):
             self.connect_button.setText("Disconnect")
 
     def __init__(self):
-        global isModeUsed
+        global isModeUsed, idx
         super().__init__()
         self.setFixedSize(400, 300)
         isModeUsed = False
+        idx = -1
         self.setWindowTitle("HappyLigthing-py")
         self.setWindowIcon(QIcon('HappyLighting-py_icon.png'))
 
@@ -55,18 +57,18 @@ class MainWindow(QMainWindow):
         self.horizontalSlider.setOrientation(Qt.Horizontal)
         self.horizontalSlider.valueChanged.connect(self.changeSpeed)
 
-        self.deviceMic = QCheckBox(self)
+        self.deviceMic = QRadioButton(self)
         self.deviceMic.setText("Device Mic")
-        self.deviceMic.setCheckState(Qt.Unchecked)
-        self.deviceMic.setGeometry(QRect(100, 90, 91, 20))
+        self.deviceMic.setChecked(True)
+        self.deviceMic.setGeometry(QRect(100, 170, 91, 20))
 
         self.micDevices_combobox = QComboBox(self)
-        self.micDevices_combobox.setGeometry(QRect(10, 150, 191, 22))
+        self.micDevices_combobox.setGeometry(QRect(10, 210, 191, 22))
 
-        self.localMic = QCheckBox(self)
+        self.localMic = QRadioButton(self)
         self.localMic.setText("Local Mic")
-        self.localMic.setCheckState(Qt.Unchecked)
-        self.localMic.setGeometry(QRect(10, 90, 71, 20))
+        self.localMic.setChecked(False)
+        self.localMic.setGeometry(QRect(10, 170, 91, 20))
 
         self.startCapture = QCheckBox(self)
         self.startCapture.setText("Start Capture")
@@ -96,10 +98,11 @@ class MainWindow(QMainWindow):
         self.devices_combobox.setGeometry(QRect(90, 10, 121, 22))
                 # Label Create 
         self.label = QLabel(self) 
-        self.label.setGeometry(QRect(70, 90, 10, 10)) 
-        self.label.setMinimumSize(QSize(300, 300)) 
-        self.label.setMaximumSize(QSize(300, 300)) 
+        self.label.setGeometry(QRect(220, 11, 20, 20)) 
+        #self.label.setMinimumSize(QSize(100, 100)) 
+        #self.label.setMaximumSize(QSize(300, 300)) 
         self.label.setObjectName("lb1") 
+        self.label.setScaledContents(True)
         # Loading the GIF 
         self.movie = QMovie("Flower.gif") 
         self.label.setMovie(self.movie) 
@@ -114,7 +117,7 @@ class MainWindow(QMainWindow):
         self.label1.setStyleSheet("QLabel {color: red; }");
 
         self.label2 = QLabel(self)
-        self.label2.setGeometry(QRect(10, 130, 71, 20))
+        self.label2.setGeometry(QRect(10, 190, 71, 20))
         self.label2.setText("Input Devices")
         #self.label2.setStyleSheet("QLabel {color: red; }");
 
@@ -122,30 +125,33 @@ class MainWindow(QMainWindow):
         self.send_button.setText("Color")
         self.send_button.setGeometry(QRect(310, 10, 80, 23))
 
-        self.bass_button = QPushButton(self)
+        self.bass_button = QCheckBox(self)
+        self.bass_button.setChecked(True)
         self.bass_button.setText("Bass")
-        self.bass_button.setGeometry(QRect(10, 110, 51, 23))
+        self.bass_button.setGeometry(QRect(10, 230, 51, 23))
 
-        self.middle_button = QPushButton(self)
+        self.middle_button = QCheckBox(self)
+        self.middle_button.setChecked(True)
         self.middle_button.setText("Middle")
-        self.middle_button.setGeometry(QRect(70, 110, 75, 23))
+        self.middle_button.setGeometry(QRect(80, 230, 51, 23))
 
-        self.high_button = QPushButton(self)
+        self.high_button = QCheckBox(self)
+        self.high_button.setChecked(True)
         self.high_button.setText("High")
-        self.high_button.setGeometry(QRect(150, 110, 51, 23))
+        self.high_button.setGeometry(QRect(150, 230, 51, 23))
 
 
         self.scan_button.clicked.connect(self.handle_scan)
         self.connect_button.clicked.connect(self.handle_connect)
         self.send_button.clicked.connect(self.handle_send)
         self.modeList.itemDoubleClicked.connect(self.selectMode)
-        self.deviceMic.stateChanged.connect(self.handle_mic)
-        self.localMic.stateChanged.connect(self.handle_localmic)
+        self.deviceMic.toggled.connect(self.handle_musicmode)
+        self.localMic.toggled.connect(self.handle_musicmode)
         self.startCapture.stateChanged.connect(self.handle_startcapture)
         self.micDevices_combobox.currentIndexChanged.connect(self.updateMicDevice)
-        self.bass_button.clicked.connect(self.handle_enabledisable)
-        self.middle_button.clicked.connect(self.handle_enabledisable)
-        self.high_button.clicked.connect(self.handle_enabledisable)
+        self.bass_button.clicked.connect(lambda: self.handle_enabledisable("B"))
+        self.middle_button.clicked.connect(lambda: self.handle_enabledisable("M"))
+        self.high_button.clicked.connect(lambda: self.handle_enabledisable("H"))
     
 
         self.modeList.addItem("Pulsating rainbow")
@@ -170,17 +176,7 @@ class MainWindow(QMainWindow):
         self.modeList.addItem("Rainbow jumping change")
         self.modeList.addItem("Pulsating RGB")
         self.modeList.addItem("RGB jumping change")
-
-
-        info = Utils.p.get_host_api_info_by_index(0)
-        numdevices = info.get('deviceCount')
-        for i in range(0, numdevices):
-            if (Utils.p.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
-                tmp_device = Utils.p.get_device_info_by_host_api_device_index(0, i)
-                Utils.InputDevices[i] = tmp_device
-                dev_name = tmp_device["name"]
-                self.micDevices_combobox.addItem(dev_name)
-
+        self.modeList.addItem("Music Mode")
 
         self.setElemetsActiveStatus(False)
 
@@ -197,9 +193,15 @@ class MainWindow(QMainWindow):
         
 
     def selectMode(self, item):
-        global isModeUsed
+        global isModeUsed, idx
         isModeUsed = True
-        self.handle_mode(self.modeList.indexFromItem(item).row())
+        idx = self.modeList.indexFromItem(item).row()
+        if idx <= 21: 
+            self.handle_mode(idx)
+        elif idx >= 22:
+            if idx == 22:
+                self.handle_musicmode()
+            
 
     @cached_property
     def devices(self):
@@ -245,6 +247,14 @@ class MainWindow(QMainWindow):
             self.label1.setText("Connected")
             self.scan_button.setEnabled(False)
             #self.connect_button.setEnabled(False)
+            info = Utils.p.get_host_api_info_by_index(0)
+            numdevices = info.get('deviceCount')
+            for i in range(0, numdevices):
+                if (Utils.p.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
+                    tmp_device = Utils.p.get_device_info_by_host_api_device_index(0, i)
+                    Utils.InputDevices[i] = tmp_device
+                    dev_name = tmp_device["name"]
+                    self.micDevices_combobox.addItem(dev_name)
             self.label1.setStyleSheet("QLabel {color: green; }");
             self.setElemetsActiveStatus(True)
             self.connect_button.disconnect()
@@ -288,14 +298,14 @@ class MainWindow(QMainWindow):
     async def handle_powerOn(self):
         await self.current_client.writePower("On")
 
-    def handle_enabledisable(self):
-        whois = self.sender().text()
+    @qasync.asyncSlot()
+    async def handle_enabledisable(self, what):
 
-        if whois == "Bass":
+        if what == "B":
             Utils.BlueMic = not Utils.BlueMic                  
-        if whois == "Middle":
+        if what == "M":
             Utils.RedMic = not Utils.RedMic
-        if whois == "High":
+        if what == "H":
             Utils.GreenMic = not Utils.GreenMic
 
         self.handle_rewrite()
@@ -327,28 +337,20 @@ class MainWindow(QMainWindow):
     def updateMicDevice(self, index):
         Utils.selectedInputDevice = index
 
+
     @qasync.asyncSlot()
-    async def handle_mic(self):
-        if self.localMic.checkState() == Qt.Checked:
-             self.localMic.setCheckState(False)
-             Utils.localAudio = False
-             
-        if self.deviceMic.checkState() == Qt.Checked:
-            await self.current_client.writeMicState(True)
-        else:
-            await self.current_client.writeMicState(False)
-        
-    @qasync.asyncSlot()
-    async def handle_localmic(self):         
-        if self.deviceMic.checkState() == Qt.Checked:
-             self.deviceMic.setCheckState(False)
-             await self.current_client.writeMicState(False)
-             
-        if self.localMic.checkState() == Qt.Checked and Utils.selectedInputDevice >= 0:
-            Utils.localAudio = True 
-            await ExternalAudio.start_stream()
-        else:
-            Utils.localAudio = False
+    async def handle_musicmode(self):
+        global isModeUsed, idx
+       
+        if isModeUsed and idx == 22:
+            if self.deviceMic.isChecked():
+                Utils.localAudio = False
+                await self.current_client.writeMicState(True)
+            elif self.localMic.isChecked():
+                await self.current_client.writeMicState(False)
+                Utils.localAudio = True 
+                await ExternalAudio.start_stream()
+          
 
     async def captureImage(self):
         #NUM_CLUSTERS = 5
@@ -361,11 +363,7 @@ class MainWindow(QMainWindow):
                     return np.unravel_index(np.bincount(a1D).argmax(), col_range)
                 except Exception as err:
                     Utils.printLog(err)
-
-            
-
-            
-           
+                    
             #print('reading image')
             im = ImageGrab.grab()
             #im = Image.open('image.jpg')
@@ -384,6 +382,7 @@ class MainWindow(QMainWindow):
             loop.run_in_executor(None, lambda: asyncio.run(self.captureImage()))
         else:
             Utils.captureMode = False
+
 
 
 def main():

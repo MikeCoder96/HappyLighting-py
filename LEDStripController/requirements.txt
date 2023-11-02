@@ -1,8 +1,10 @@
-bleak==0.14.1
-matplotlib==3.6.3
-numpy==1.24.1
-Pillow==9.4.0
+bleak==0.21.1
+matplotlib==3.8.1
+numpy==1.26.1
+Pillow==10.0.1
+Pillow==10.1.0
 pyaudio==0.2.13
-PyQt5==5.15.7
-qasync==0.23.0
-scipy==1.10.0
+PyQt5==5.15.10
+PyQt5_sip==12.13.0
+qasync==0.26.0
+scipy==1.11.3
