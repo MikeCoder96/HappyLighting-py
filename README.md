@@ -11,6 +11,12 @@
     <b>HappyLighting-py</b> was built reversing the original APK and replicated the BLE communication but with intention to create new functionalities.
 </p>
 
+<p align="center">
+ <img style="max-width: 100%;" width="30%" height="30%" src="https://github.com/MikeCoder96/HappyLighting-py/assets/50410305/e1f50f47-89e4-48ef-ba87-ec72c3ab5035)">
+ <img style="max-width: 100%;" width="30%" height="30%" src="https://github.com/MikeCoder96/HappyLighting-py/assets/50410305/db274da9-9817-40ec-8e11-0420d7146bf4)">
+</p>
+
+
 ---
 
 ### HappyLighting Support
