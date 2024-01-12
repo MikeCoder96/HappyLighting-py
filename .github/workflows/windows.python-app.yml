@@ -1,0 +1,46 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: HappyLighting-py Action
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install dependencies
+      run: |
+         sudo apt update
+         sudo apt install libasound-dev portaudio19-dev -y
+    
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 pytest
+        if [ -f LEDStripController/requirements.txt ]; then pip install -r LEDStripController/requirements.txt; fi
+    - name: Compile and generate exe
+      run: |
+        python -m pip install pyinstaller
+        pyinstaller --onefile LEDStripController/pyhl.py
+   
+    - name: Upload build
+      uses: actions/upload-artifact@v2
+      with:
+        name: PyHL - Linux Release generated
+        path: dist/pyhl.exe
