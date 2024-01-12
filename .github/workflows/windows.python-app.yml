@@ -30,7 +30,7 @@ jobs:
     - name: Compile and generate exe
       run: |
         python -m pip install pyinstaller
-        pyinstaller --onefile --add-data="LEDStripController/gamma_table.npy;." LEDStripController/pyhl.py
+        pyinstaller LEDStripController/pyhl.spec
    
     - name: Upload build
       uses: actions/upload-artifact@v2
