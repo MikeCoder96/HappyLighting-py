@@ -35,6 +35,7 @@ class MainWindow(QMainWindow):
             self.connect_button.clicked.connect(self.destroy_client)
             self.connect_button.setText("Disconnect")
 
+
     def __init__(self):
         global isModeUsed, idx
         super().__init__()
@@ -103,8 +104,21 @@ class MainWindow(QMainWindow):
         #self.label.setMaximumSize(QSize(300, 300)) 
         self.label.setObjectName("lb1") 
         self.label.setScaledContents(True)
+       
+        import os
+        self.movie = None
         # Loading the GIF 
-        self.movie = QMovie("Flower.gif") 
+        """ Get absolute path to resource, works for dev and for PyInstaller """
+        base_path = ""
+        try:
+            # PyInstaller creates a temp folder and stores path in _MEIPASS
+            base_path = sys._MEIPASS
+        except Exception:
+            base_path = os.path.abspath(".")
+
+        self.movie = QMovie(os.path.join(base_path, "Flower.gif"))
+
+        #self.movie = QMovie(resource_path("Flower.gif")) 
         self.label.setMovie(self.movie) 
         self.label.hide()
 
