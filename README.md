@@ -19,6 +19,30 @@
 
 ---
 
+# How To
+
+First of all you need python. 
+For Windows download the latest version from [here](https://www.python.org/downloads/) 
+
+For Linux download by running ```apt install python3```
+
+After installed Python, the procedure is the same for both OS. 
+Open the terminal inside the folder "LEDStripController" and run these commands:
+
+```
+# First, download the requirements by running
+pip install -r requirements.txt
+
+# After that, run the app by run
+python3 pyhl.py
+
+# Enjoy
+```
+If you are on Linux, probably you need to install 2 more dependencies, in a console run:
+```apt install libasound-dev portaudio19-dev -y```
+
+There is also an available executable for Linux or Windows in Release section if you want a Click&Go file
+
 ### HappyLighting Support
 
 - [x] Change color
