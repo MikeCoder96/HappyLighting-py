@@ -364,3 +364,4 @@ MigrationBackup/
 FodyWeavers.xsd
 /LEDStripController/env
 /Arts
+/LEDStripController/build/pyhl
