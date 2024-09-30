@@ -1,6 +1,7 @@
 from bleak import BleakScanner, BleakClient
 import asyncio
 import sys
+sys.coinit_flags = 0    # 0 means MTA
 import pyaudio
 import qasync
 import numpy as np
